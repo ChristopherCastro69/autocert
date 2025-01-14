@@ -1,10 +1,13 @@
 import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { CertificateCard } from "./display-cards/certificate-card";
 
 export default function UploadCertificate() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [message, setMessage] = useState<string>("");
-  const fileInputRef = useRef<HTMLInputElement | null>(null); // Create a ref for the file input
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isCardOpen, setIsCardOpen] = useState<boolean>(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -12,6 +15,8 @@ export default function UploadCertificate() {
       setFile(selectedFile);
       const url = URL.createObjectURL(selectedFile);
       setPreviewUrl(url);
+      setIsCardOpen(true); // Ensure this is set to true
+      console.log("Card should open now");
     }
   };
 
@@ -44,7 +49,7 @@ export default function UploadCertificate() {
   };
 
   const triggerFileInput = () => {
-    fileInputRef.current?.click(); // Trigger the file input click
+    fileInputRef.current?.click();
   };
 
   return (
@@ -54,24 +59,27 @@ export default function UploadCertificate() {
           type="file"
           accept="image/*"
           onChange={handleFileChange}
-          ref={fileInputRef} // Attach the ref to the input
-          style={{ display: "none" }} // Hide the input
+          ref={fileInputRef}
+          style={{ display: "none" }}
         />
-        <button type="button" onClick={triggerFileInput}>
-          Upload Certificate
-        </button>
+        <Button
+          asChild
+          size="lg"
+          variant={"default"}
+          disabled
+          className="cursor-pointer"
+          onClick={triggerFileInput}
+        >
+          <p>Upload Certificate Template</p>
+        </Button>
       </form>
-      {previewUrl && (
-        <div>
-          <h3>Image Preview:</h3>
-          <img
-            src={previewUrl}
-            alt="Image Preview"
-            style={{ maxWidth: "300px", marginTop: "10px" }}
-          />
-        </div>
-      )}
       {message && <p>{message}</p>}
+
+      <CertificateCard
+        isOpen={isCardOpen}
+        onClose={() => setIsCardOpen(false)}
+        imageUrl={previewUrl}
+      />
     </div>
   );
 }
