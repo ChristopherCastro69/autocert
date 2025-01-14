@@ -3,8 +3,7 @@
 import { useState } from "react";
 import UploadCertificate from "@/components/upload-certificate";
 import Certificate from "./../app/public/images/certificate.jpg";
-import { Button } from "./ui/button";
-import Link from "next/link";
+import UploadRecipient from "./upload-recipient";
 
 export default function Header() {
   const [showUpload, setShowUpload] = useState(true);
@@ -24,32 +23,15 @@ export default function Header() {
         </p>
 
         <div className="flex lg:flex-row flex-col gap-2 mt-6">
-          <Button
-            asChild
-            size="lg"
-            variant={"outline"}
-            disabled
-            className="cursor-pointer "
-          >
-            <Link href="/">Upload Recipient List</Link>
-          </Button>
-          <Button
-            asChild
-            size="lg"
-            variant={"default"}
-            disabled
-            className="cursor-pointer "
-            onClick={handleUploadClick}
-          >
-            Upload Certificate Template
-          </Button>
+          <UploadRecipient />
+          <UploadCertificate />
         </div>
       </div>
       <div className="p-4">
         <img src={Certificate.src} alt="Certificate" className="w-full" />
       </div>
 
-      {showUpload && <UploadCertificate />}
+      {showUpload}
     </div>
   );
 }
