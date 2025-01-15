@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { CertificateCard } from "./display-cards/certificate-card";
+import { CertificateCard } from "./certificate-card";
 
 export default function UploadCertificate() {
   const [file, setFile] = useState<File | null>(null);

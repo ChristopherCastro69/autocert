@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import UploadCertificate from "@/components/upload-certificate";
+import UploadCertificate from "@/components/certificate/upload-certificate";
 import Certificate from "./../app/public/images/certificate.jpg";
 import UploadRecipient from "./upload-recipient";
+import GenerateCertificate from "./generate-certificate";
 
 export default function Header() {
   const [showUpload, setShowUpload] = useState(true);
@@ -23,15 +24,16 @@ export default function Header() {
         </p>
 
         <div className="flex lg:flex-row flex-col gap-2 mt-6">
-          <UploadRecipient />
-          <UploadCertificate />
+          {/* <UploadRecipient /> */}
+          {/* <UploadCertificate /> */}
+          <GenerateCertificate />
         </div>
       </div>
       <div className="p-4">
         <img src={Certificate.src} alt="Certificate" className="w-full" />
       </div>
 
-      {showUpload}
+      {/* {showUpload} */}
     </div>
   );
 }

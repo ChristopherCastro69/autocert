@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 import Papa from "papaparse";
 import CombineData from "@/components/combine-data";
-import { RecipientCard } from "./display-cards/recipient-card";
+import { RecipientCard } from "./recipient/recipient-card";
 
 export default function UploadRecipient() {
   const [jsonData, setJsonData] = useState<any[]>([]);
@@ -48,8 +48,8 @@ export default function UploadRecipient() {
       <Button
         type="button"
         onClick={triggerFileInput}
-        size="lg"
-        variant="outline"
+        size="full"
+        variant="ghost"
       >
         Upload Recipient List
       </Button>
