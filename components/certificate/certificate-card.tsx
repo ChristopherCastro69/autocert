@@ -1,9 +1,8 @@
-import React, { useEffect, useRef } from "react";
-import UploadCertificate from "./upload-certificate";
-import Toolbar from "./toolbar";
+import React, { useState, useEffect } from "react";
+import Toolbar from "../toolbar";
 import GoogleCert from "./../../app/public/images/gdg-cert.png";
 import { Button } from "../ui/button";
-import { Download, XIcon } from "lucide-react";
+import { XIcon } from "lucide-react";
 
 interface CertificateCardProps {
   isOpen: boolean;
@@ -11,7 +10,41 @@ interface CertificateCardProps {
 }
 
 export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+
+  const handleImageUpload = (file: File) => {
+    setSelectedImage(file);
+  };
+
+  useEffect(() => {
+    if (selectedImage) {
+      generateCertificate();
+    }
+  }, [selectedImage]);
   if (!isOpen) return null;
+
+  const generateCertificate = () => {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+
+    if (selectedImage) {
+      const image = new Image();
+      image.src = URL.createObjectURL(selectedImage);
+
+      image.onload = () => {
+        canvas.width = image.width;
+        canvas.height = image.height;
+
+        if (context) {
+          context.drawImage(image, 0, 0);
+          // Additional drawing logic can go here if needed
+
+          setGeneratedImage(canvas.toDataURL("image/png"));
+        }
+      };
+    }
+  };
 
   return (
     <div
@@ -32,31 +65,33 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         <div className="lg:h-[550px] overflow-y-auto w-full p-2">
           <div className="grid grid-cols-3 grid-flow-col">
             <div className="p-4 col-span-2">
-              <img src={GoogleCert.src} alt="GoogleCert" className="w-full" />
+              {generatedImage ? (
+                <img
+                  src={generatedImage}
+                  alt="Generated Certificate"
+                  className="w-full"
+                />
+              ) : (
+                <img
+                  src={GoogleCert.src}
+                  alt="Certificate"
+                  className="w-full"
+                />
+              )}
             </div>
             <div className="col-span-1 border border-gray-300 bg-white rounded-lg shadow-sm p-4">
               <div className="items-center justify-center">
-                <Toolbar />
+                <Toolbar handleImageUpload={handleImageUpload} />
               </div>
               <div className="absolute bottom-0 right-2 flex gap-2 p-4">
-                {/* <Button
-                  asChild
-                  size="sm"
-                  variant={"secondary"}
-                  disabled
-                  className="cursor-pointer"
-                >
-                  <p>New </p>
-                </Button> */}
-
                 <Button
                   asChild
                   size="sm"
                   variant={"secondary"}
-                  disabled
+                  disabled={!generatedImage} // Enable button only if an image is generated
                   className="cursor-pointer"
                 >
-                  <p>Generate </p>
+                  <p>Generate</p>
                 </Button>
               </div>
             </div>

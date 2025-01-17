@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 import Papa from "papaparse";
 import CombineData from "@/components/combine-data";
-import { RecipientCard } from "./recipient/recipient-card";
+import { RecipientCard } from "./recipient-card";
 
 export default function UploadRecipient() {
   const [jsonData, setJsonData] = useState<any[]>([]);
