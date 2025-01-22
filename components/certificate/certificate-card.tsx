@@ -13,7 +13,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [name, setName] = useState<string | "error">("error");
-  const [fontSize, setFontSize] = useState<number>(12);
+  const [fontSize, setFontSize] = useState<number>(100);
   const [isBold, setIsBold] = useState<boolean>(false);
   const [isItalic, setIsItalic] = useState<boolean>(false);
   const [isUnderline, setIsUnderline] = useState<boolean>(false);
@@ -62,8 +62,8 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     setIsUnderline(!isUnderline);
   };
 
-  const handleFontFamilyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedFont(e.target.value);
+  const handleFontFamilyChange = (font: string) => {
+    setSelectedFont(font);
   };
 
   const handleTextColorChange = (color: string) => {
@@ -92,10 +92,19 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         if (context) {
           context.drawImage(image, 0, 0);
 
-          context.font = ` ${isBold ? "bold" : ""} ${fontSize}px Arial`;
-          context.fillStyle = "black";
+          context.font = ` ${isBold ? "bold" : ""} ${isItalic ? "italic" : ""} ${fontSize}px ${selectedFont}`;
+          context.fillStyle = `${textColor}`;
           context.fillText(name, posX, posY);
 
+          if (isUnderline) {
+            context.strokeStyle = textColor;
+            context.lineWidth = 2;
+            const textWidth = context.measureText(name).width;
+            context.beginPath();
+            context.moveTo(posX, posY + 2);
+            context.lineTo(posX + textWidth, posY + 2);
+            context.stroke();
+          }
           setGeneratedImage(canvas.toDataURL("image/png"));
         }
       };
@@ -151,9 +160,9 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   name={""}
                   fontSize={0}
                   selectedFont={""}
-                  isBold={false}
-                  isItalic={false}
-                  isUnderline={false}
+                  isBold={isBold}
+                  isItalic={isItalic}
+                  isUnderline={isUnderline}
                   posX={0}
                   posY={0}
                   textColor={""}

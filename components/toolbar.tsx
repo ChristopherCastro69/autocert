@@ -18,7 +18,7 @@ interface ToolbarProps {
   handleImageUpload: (file: File) => void;
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleFontSizeChange: (size: number) => void;
-  handleFontFamilyChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  handleFontFamilyChange: (font: string) => void;
   handleBoldToggle: () => void;
   handleItalicToggle: () => void;
   handleUnderlineToggle: () => void;
@@ -44,7 +44,7 @@ const fontOptions = [
   "Verdana",
 ];
 const fontSizeOptions = [
-  12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 56, 72, 96, 128,
+  16, 18, 20, 24, 28, 32, 36, 48, 56, 72, 96, 100, 128, 156, 200,
 ];
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -58,16 +58,16 @@ const Toolbar: React.FC<ToolbarProps> = ({
   handleTextColorChange,
   handlePosX,
   handlePosY,
-  name,
   fontSize,
-  selectedFont,
   isBold,
   isItalic,
   isUnderline,
-  posX,
-  posY,
   textColor,
 }) => {
+  console.log("isItalic: ", isItalic);
+  console.log("isBold: ", isBold);
+  console.log("isUnderline: ", isUnderline);
+
   return (
     <div className="flex-row items-center justify-center h-full text-sm space-y-4 ">
       <div className="mb-1">
@@ -110,48 +110,53 @@ const Toolbar: React.FC<ToolbarProps> = ({
       </div>
       <div className="border-t border-gray-300 w-full flex-row space-y-2">
         <p className="mt-2">Typography</p>
-        <div className="flex items-center space-x-2">
-          <Select>
-            <SelectTrigger className="w-[100px]">
-              <SelectValue placeholder="Font" />
-            </SelectTrigger>
-            <SelectContent>
-              {fontOptions.map((font) => (
-                <SelectItem key={font} value={font}>
-                  {font}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <CustomSelect
-            options={fontSizeOptions}
-            value={fontSize}
-            onChange={handleFontSizeChange}
-          />
-          <Button
-            size={"xs"}
-            variant="typography"
-            className={`${isBold ? "bg-gray-200 text-black" : "bg-white text-black"} hover:bg-gray-200 focus:ring-black`}
-            onClick={handleBoldToggle}
-          >
-            <Bold />
-          </Button>
-          <Button
-            size={"xs"}
-            variant={"typography"}
-            className={`${isItalic ? "bg-gray-200 text-black" : "bg-white text-black"} hover:bg-gray-200 focus:ring-black`}
-            onClick={handleItalicToggle}
-          >
-            <Italic />
-          </Button>
-          <Button
-            size={"xs"}
-            variant={"typography"}
-            className={`${isUnderline ? "bg-gray-200 text-black" : "bg-white text-black"} hover:bg-gray-200 focus:ring-black`}
-            onClick={handleUnderlineToggle}
-          >
-            <Underline />
-          </Button>
+        <div className="lg:flex flex-row  items-center space-x-2 ">
+          <div className="flex space-x-2">
+            <Select onValueChange={handleFontFamilyChange}>
+              <SelectTrigger className="w-[100px]">
+                <SelectValue placeholder="Font" />
+              </SelectTrigger>
+              <SelectContent>
+                {fontOptions.map((font) => (
+                  <SelectItem key={font} value={font}>
+                    {font}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <CustomSelect
+              options={fontSizeOptions}
+              value={fontSize}
+              onChange={handleFontSizeChange}
+            />
+          </div>
+
+          <div className="flex lg:mt-0 mt-2 space-x-1">
+            <Button
+              size={"xs"}
+              variant="typography"
+              className={`${isBold ? "bg-gray-200 text-black" : "bg-white text-black"} hover:bg-gray-200 focus:ring-black`}
+              onClick={handleBoldToggle}
+            >
+              <Bold />
+            </Button>
+            <Button
+              size={"xs"}
+              variant={"typography"}
+              className={`${isItalic ? "bg-gray-200 text-black" : "bg-white text-black"} hover:bg-gray-200 focus:ring-black`}
+              onClick={handleItalicToggle}
+            >
+              <Italic />
+            </Button>
+            <Button
+              size={"xs"}
+              variant={"typography"}
+              className={`${isUnderline ? "bg-gray-200 text-black" : "bg-white text-black"} hover:bg-gray-200 focus:ring-black`}
+              onClick={handleUnderlineToggle}
+            >
+              <Underline />
+            </Button>
+          </div>
         </div>
       </div>
       <div className="border-t border-gray-300 w-full flex-row space-y-2">
