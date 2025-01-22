@@ -13,14 +13,14 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [name, setName] = useState<string | "error">("error");
-  const [fontSize, setFontSize] = useState<string>("12");
+  const [fontSize, setFontSize] = useState<number>(12);
   const [isBold, setIsBold] = useState<boolean>(false);
   const [isItalic, setIsItalic] = useState<boolean>(false);
   const [isUnderline, setIsUnderline] = useState<boolean>(false);
   const [textColor, setTextColor] = useState<string>("#000000");
   const [selectedFont, setSelectedFont] = useState<string>("Arial");
-  const [posX, setPosX] = useState<number>(100);
-  const [posY, setPosY] = useState<number>(100);
+  const [posX, setPosX] = useState<number>(300);
+  const [posY, setPosY] = useState<number>(300);
 
   const handleImageUpload = (file: File) => {
     setSelectedImage(file);
@@ -47,10 +47,9 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
   };
-  const handleFontSizeChange = () => {
-    setFontSize(fontSize);
+  const handleFontSizeChange = (value: number) => {
+    setFontSize(value);
   };
-  console.log("fontsize: ", fontSize);
   const handleBoldToggle = () => {
     setIsBold(!isBold);
   };
@@ -70,12 +69,12 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const handleTextColorChange = (color: string) => {
     setTextColor(color);
   };
-  const handlePosX = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPosX(Number(e.target.value));
+  const handlePosX = (value: number) => {
+    setPosX(value);
   };
 
-  const handlePosY = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPosY(Number(e.target.value));
+  const handlePosY = (value: number) => {
+    setPosY(value);
   };
 
   const generateCertificate = () => {
@@ -93,9 +92,8 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         if (context) {
           context.drawImage(image, 0, 0);
 
-          context.font = `%{isBold ? "bold" : ""} ${isItalic ? "italic" : ""} ${fontSize}px  ${selectedFont}`;
-
-          context.fillStyle = textColor;
+          context.font = ` ${isBold ? "bold" : ""} ${fontSize}px Arial`;
+          context.fillStyle = "black";
           context.fillText(name, posX, posY);
 
           setGeneratedImage(canvas.toDataURL("image/png"));

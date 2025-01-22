@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 
 interface CustomSelectProps {
-  options: string[];
-  value: string;
-  onChange: (value: string) => void;
+  options: number[];
+  value: number;
+  onChange: (value: number) => void;
 }
 
 const CustomSelect: React.FC<CustomSelectProps> = ({
@@ -12,18 +12,19 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   onChange,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [inputValue, setInputValue] = useState(value);
+  const [inputValue, setInputValue] = useState(value.toString());
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleSelect = (option: string) => {
-    setInputValue(option);
+  const handleSelect = (option: number) => {
+    setInputValue(option.toString());
     onChange(option);
     setIsOpen(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-    onChange(e.target.value);
+    const newValue = Number(e.target.value);
+    setInputValue(newValue.toString());
+    onChange(newValue);
   };
 
   const handleClickOutside = (event: MouseEvent) => {
@@ -69,7 +70,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
         </svg>
       </span>
       {isOpen && (
-        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg">
+        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg h-40 overflow-y-auto">
           {options.map((option) => (
             <div
               key={option}

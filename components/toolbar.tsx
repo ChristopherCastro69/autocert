@@ -17,14 +17,14 @@ import ColorPicker from "./ui/color-picker";
 interface ToolbarProps {
   handleImageUpload: (file: File) => void;
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleFontSizeChange: () => void;
+  handleFontSizeChange: (size: number) => void;
   handleFontFamilyChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleBoldToggle: () => void;
   handleItalicToggle: () => void;
   handleUnderlineToggle: () => void;
   handleTextColorChange: (color: string) => void;
-  handlePosX: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handlePosY: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handlePosX: (value: number) => void;
+  handlePosY: (value: number) => void;
   name: string;
   fontSize: number;
   selectedFont: string;
@@ -36,14 +36,16 @@ interface ToolbarProps {
   textColor: string;
 }
 
-const fonts = [
+const fontOptions = [
   "Arial",
   "Helvetica",
   "Times New Roman",
   "Courier New",
   "Verdana",
 ];
-const fontSizes = [12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 56, 72, 96, 128];
+const fontSizeOptions = [
+  12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 56, 72, 96, 128,
+];
 
 const Toolbar: React.FC<ToolbarProps> = ({
   handleImageUpload,
@@ -86,13 +88,24 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <p className="mt-2">Position</p>
         <div className="space-y-1">
           <p>X-axis</p>
-          <Slider defaultValue={[33]} max={100} step={1} />
+          <Slider
+            min={0}
+            defaultValue={[500]}
+            max={2500}
+            step={1}
+            onValueChange={(value) => handlePosX(value[0])}
+          />
         </div>
 
         <div className="space-y-1">
           <p>Y-axis</p>
-
-          <Slider defaultValue={[33]} max={100} step={1} />
+          <Slider
+            min={0}
+            defaultValue={[500]}
+            max={2000}
+            step={1}
+            onValueChange={(value) => handlePosY(value[0])}
+          />
         </div>
       </div>
       <div className="border-t border-gray-300 w-full flex-row space-y-2">
@@ -103,16 +116,16 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <SelectValue placeholder="Font" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Arial">Arial</SelectItem>
-              <SelectItem value="Helvetica">Helvetica</SelectItem>
-              <SelectItem value="Times New Roman">Times New Roman</SelectItem>
-              <SelectItem value="Courier New">Courier New</SelectItem>
-              <SelectItem value="Verdana">Verdana</SelectItem>
+              {fontOptions.map((font) => (
+                <SelectItem key={font} value={font}>
+                  {font}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <CustomSelect
-            options={fontSizes.map((size) => size.toString())}
-            value={fontSize.toString()}
+            options={fontSizeOptions}
+            value={fontSize}
             onChange={handleFontSizeChange}
           />
           <Button
