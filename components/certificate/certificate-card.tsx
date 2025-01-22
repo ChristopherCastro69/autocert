@@ -12,6 +12,15 @@ interface CertificateCardProps {
 export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [name, setName] = useState<string | "error">("error");
+  const [fontSize, setFontSize] = useState<string>("12");
+  const [isBold, setIsBold] = useState<boolean>(false);
+  const [isItalic, setIsItalic] = useState<boolean>(false);
+  const [isUnderline, setIsUnderline] = useState<boolean>(false);
+  const [textColor, setTextColor] = useState<string>("#000000");
+  const [selectedFont, setSelectedFont] = useState<string>("Arial");
+  const [posX, setPosX] = useState<number>(100);
+  const [posY, setPosY] = useState<number>(100);
 
   const handleImageUpload = (file: File) => {
     setSelectedImage(file);
@@ -21,8 +30,53 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     if (selectedImage) {
       generateCertificate();
     }
-  }, [selectedImage]);
+  }, [
+    selectedImage,
+    name,
+    fontSize,
+    isBold,
+    isItalic,
+    isUnderline,
+    selectedFont,
+    posX,
+    posY,
+    textColor,
+  ]);
   if (!isOpen) return null;
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+  };
+  const handleFontSizeChange = () => {
+    setFontSize(fontSize);
+  };
+  console.log("fontsize: ", fontSize);
+  const handleBoldToggle = () => {
+    setIsBold(!isBold);
+  };
+
+  const handleItalicToggle = () => {
+    setIsItalic(!isItalic);
+  };
+
+  const handleUnderlineToggle = () => {
+    setIsUnderline(!isUnderline);
+  };
+
+  const handleFontFamilyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedFont(e.target.value);
+  };
+
+  const handleTextColorChange = (color: string) => {
+    setTextColor(color);
+  };
+  const handlePosX = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPosX(Number(e.target.value));
+  };
+
+  const handlePosY = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPosY(Number(e.target.value));
+  };
 
   const generateCertificate = () => {
     const canvas = document.createElement("canvas");
@@ -38,7 +92,11 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
 
         if (context) {
           context.drawImage(image, 0, 0);
-          // Additional drawing logic can go here if needed
+
+          context.font = `%{isBold ? "bold" : ""} ${isItalic ? "italic" : ""} ${fontSize}px  ${selectedFont}`;
+
+          context.fillStyle = textColor;
+          context.fillText(name, posX, posY);
 
           setGeneratedImage(canvas.toDataURL("image/png"));
         }
@@ -81,14 +139,34 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
             </div>
             <div className="col-span-1 border border-gray-300 bg-white rounded-lg shadow-sm p-4">
               <div className="items-center justify-center">
-                <Toolbar handleImageUpload={handleImageUpload} />
+                <Toolbar
+                  handleImageUpload={handleImageUpload}
+                  handleNameChange={handleNameChange}
+                  handleFontSizeChange={handleFontSizeChange}
+                  handleBoldToggle={handleBoldToggle}
+                  handleItalicToggle={handleItalicToggle}
+                  handleUnderlineToggle={handleUnderlineToggle}
+                  handleFontFamilyChange={handleFontFamilyChange}
+                  handlePosX={handlePosX}
+                  handlePosY={handlePosY}
+                  handleTextColorChange={handleTextColorChange}
+                  name={""}
+                  fontSize={0}
+                  selectedFont={""}
+                  isBold={false}
+                  isItalic={false}
+                  isUnderline={false}
+                  posX={0}
+                  posY={0}
+                  textColor={""}
+                />
               </div>
               <div className="absolute bottom-0 right-2 flex gap-2 p-4">
                 <Button
                   asChild
                   size="sm"
                   variant={"secondary"}
-                  disabled={!generatedImage} // Enable button only if an image is generated
+                  disabled={!generatedImage}
                   className="cursor-pointer"
                 >
                   <p>Generate</p>
