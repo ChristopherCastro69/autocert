@@ -15,6 +15,7 @@ import CustomSelect from "./ui/custom-select";
 import ColorPicker from "./ui/color-picker";
 
 interface ToolbarProps {
+  setNameList: (data: any[]) => void;
   handleImageUpload: (file: File) => void;
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleFontSizeChange: (size: number) => void;
@@ -48,6 +49,7 @@ const fontSizeOptions = [
 ];
 
 const Toolbar: React.FC<ToolbarProps> = ({
+  setNameList,
   handleImageUpload,
   handleNameChange,
   handleFontSizeChange,
@@ -64,14 +66,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
   isUnderline,
   textColor,
 }) => {
-  console.log("isItalic: ", isItalic);
-  console.log("isBold: ", isBold);
-  console.log("isUnderline: ", isUnderline);
-
   return (
     <div className="flex-row items-center justify-center h-full text-sm space-y-4 ">
       <div className="mb-1">
-        <UploadRecipient />
+        <UploadRecipient setDisplayData={setNameList} />
       </div>
       <div className="mb-8">
         <UploadCertificate handleImageUpload={handleImageUpload} />

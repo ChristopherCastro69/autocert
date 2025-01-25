@@ -6,6 +6,8 @@ interface ColorPickerProps {
 }
 
 const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange }) => {
+  const [placeholder, setPlaceholder] = useState(color);
+
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(e.target.value);
   };
@@ -14,6 +16,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange }) => {
     const newColor = e.target.value;
     if (/^#[0-9A-F]{6}$/i.test(newColor) || newColor === "") {
       onChange(newColor);
+      setPlaceholder(newColor);
     }
   };
 
@@ -29,7 +32,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange }) => {
         type="text"
         value={color}
         onChange={handleInputChange}
-        placeholder="#FFFFFF"
+        placeholder={placeholder || "#FFFFFF"}
         className="h-7 w-20 rounded text-center border-none focus:border-none outline-none"
       />
     </div>

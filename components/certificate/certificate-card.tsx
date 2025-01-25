@@ -12,15 +12,18 @@ interface CertificateCardProps {
 export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [name, setName] = useState<string | "error">("error");
-  const [fontSize, setFontSize] = useState<number>(100);
+  const [name, setName] = useState<string | "John Nommensen Duchac">(
+    "John Nommensen Duchac"
+  );
+  const [fontSize, setFontSize] = useState<number>(24);
   const [isBold, setIsBold] = useState<boolean>(false);
   const [isItalic, setIsItalic] = useState<boolean>(false);
   const [isUnderline, setIsUnderline] = useState<boolean>(false);
   const [textColor, setTextColor] = useState<string>("#000000");
   const [selectedFont, setSelectedFont] = useState<string>("Arial");
-  const [posX, setPosX] = useState<number>(300);
-  const [posY, setPosY] = useState<number>(300);
+  const [posX, setPosX] = useState<number>(40);
+  const [posY, setPosY] = useState<number>(80);
+  const [nameList, setNameList] = useState<any[]>([]);
 
   const handleImageUpload = (file: File) => {
     setSelectedImage(file);
@@ -41,8 +44,13 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     posX,
     posY,
     textColor,
+    nameList,
   ]);
   if (!isOpen) return null;
+  const handleNameList = (newNameList: any[]) => {
+    setNameList(newNameList);
+    console.log("Name list from certificate card: ", nameList);
+  };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
@@ -94,6 +102,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
 
           context.font = ` ${isBold ? "bold" : ""} ${isItalic ? "italic" : ""} ${fontSize}px ${selectedFont}`;
           context.fillStyle = `${textColor}`;
+          context.textAlign = "center";
           context.fillText(name, posX, posY);
 
           if (isUnderline) {
@@ -101,8 +110,8 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
             context.lineWidth = 2;
             const textWidth = context.measureText(name).width;
             context.beginPath();
-            context.moveTo(posX, posY + 2);
-            context.lineTo(posX + textWidth, posY + 2);
+            context.moveTo(posX - textWidth / 2, posY + 2);
+            context.lineTo(posX + textWidth / 2, posY + 2);
             context.stroke();
           }
           setGeneratedImage(canvas.toDataURL("image/png"));
@@ -147,6 +156,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
             <div className="col-span-1 border border-gray-300 bg-white rounded-lg shadow-sm p-4">
               <div className="items-center justify-center">
                 <Toolbar
+                  setNameList={handleNameList}
                   handleImageUpload={handleImageUpload}
                   handleNameChange={handleNameChange}
                   handleFontSizeChange={handleFontSizeChange}
@@ -157,15 +167,15 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   handlePosX={handlePosX}
                   handlePosY={handlePosY}
                   handleTextColorChange={handleTextColorChange}
-                  name={""}
-                  fontSize={0}
-                  selectedFont={""}
+                  name={name}
+                  fontSize={fontSize}
+                  selectedFont={selectedFont}
                   isBold={isBold}
                   isItalic={isItalic}
                   isUnderline={isUnderline}
-                  posX={0}
-                  posY={0}
-                  textColor={""}
+                  posX={posX}
+                  posY={posY}
+                  textColor={textColor}
                 />
               </div>
               <div className="absolute bottom-0 right-2 flex gap-2 p-4">
