@@ -2,10 +2,15 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 
 import Papa from "papaparse";
-import CombineData from "@/components/combine-data";
+import CombineData from "@/components/recipient/combine-data";
 import { RecipientCard } from "./recipient-card";
+import { json } from "stream/consumers";
 
-export default function UploadRecipient() {
+export default function UploadRecipient({
+  setDisplayData,
+}: {
+  setDisplayData: (data: any[]) => void;
+}) {
   const [jsonData, setJsonData] = useState<any[]>([]);
   const [message, setMessage] = useState<string>("");
   const [isCardOpen, setIsCardOpen] = useState<boolean>(false);
@@ -36,6 +41,10 @@ export default function UploadRecipient() {
     setJsonData(combinedData);
   };
 
+  const handleSet = (setData: any[]) => {
+    setDisplayData(setData);
+  };
+
   return (
     <div>
       <input
@@ -53,11 +62,10 @@ export default function UploadRecipient() {
       >
         Upload Recipient List
       </Button>
-      {/* {message && <p>{message}</p>} */}
 
       <RecipientCard isOpen={isCardOpen} onClose={() => setIsCardOpen(false)}>
-        <h3>Parsed Data: </h3>
-        <div className="h-80 overflow-y-auto p-2">
+        <h3 className="text-black">Parsed Data: </h3>
+        <div className="h-80 overflow-y-auto p-2 bg-opacity-50 text-black mb-4">
           {jsonData.map((entry, index) => (
             <div key={index} id={`data-entry-${index}`} className="mb-4">
               <strong>ID: {index}</strong>
@@ -65,7 +73,13 @@ export default function UploadRecipient() {
             </div>
           ))}
         </div>
-        <CombineData data={jsonData} onCombine={handleCombine} />
+        <div className="overflow-y-auto p-2 bg-opacity-50 text-black mb-4  ">
+          <CombineData
+            data={jsonData}
+            onCombine={handleCombine}
+            onSet={handleSet}
+          />
+        </div>
       </RecipientCard>
     </div>
   );

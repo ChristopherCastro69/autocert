@@ -4,9 +4,14 @@ import { Button } from "@/components/ui/button";
 interface CombineDataProps {
   data: any[];
   onCombine: (combinedData: any[]) => void;
+  onSet: (setData: any[]) => void;
 }
 
-export default function CombineData({ data, onCombine }: CombineDataProps) {
+export default function CombineData({
+  data,
+  onCombine,
+  onSet,
+}: CombineDataProps) {
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
   const [combinedData, setCombinedData] = useState<any[]>([]);
 
@@ -27,9 +32,23 @@ export default function CombineData({ data, onCombine }: CombineDataProps) {
     onCombine(newData);
   };
 
+  const handleSet = () => {
+    const setData = data.map((entry) => {
+      const filteredEntry = selectedColumns.reduce(
+        (acc, col) => {
+          acc[col] = entry[col as keyof typeof entry];
+          return acc;
+        },
+        {} as Record<string, unknown>
+      );
+      return filteredEntry;
+    });
+    onSet(setData);
+  };
+
   return (
-    <div>
-      <h3>Select Columns to Combine:</h3>
+    <div className="text-black space-y-2 gap-4">
+      <h3>Select Column Names to Display:</h3>
       <div className="flex flex-wrap gap-2">
         {Object.keys(data[0] || {}).map((column) => (
           <label key={column} className="flex items-center gap-1">
@@ -42,15 +61,15 @@ export default function CombineData({ data, onCombine }: CombineDataProps) {
           </label>
         ))}
       </div>
-      <Button onClick={handleCombine} size="lg" variant="outline">
-        Combine Data
-      </Button>
-      {combinedData.length > 0 && (
-        <div className="mt-4">
-          <h3>Combined Data:</h3>
-          <pre>{JSON.stringify(combinedData, null, 2)}</pre>
-        </div>
-      )}
+      <div className="flex gap-4">
+        <Button onClick={handleCombine} size="full" variant="outline">
+          Combine Data
+        </Button>
+
+        <Button onClick={handleSet} size="full" variant="outline">
+          Set Data
+        </Button>
+      </div>
     </div>
   );
 }

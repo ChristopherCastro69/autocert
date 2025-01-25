@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import React from "react";
 
 interface RecipientCardProps {
@@ -16,21 +17,20 @@ export function RecipientCard({
   return (
     <div
       id="modal-overlay"
-      className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+      className="fixed inset-0 z-50 bg-black/80 flex justify-center items-center"
     >
       <div
         id="modal-content"
-        className="bg-white p-4 rounded shadow-lg max-w-lg w-full relative"
+        className="bg-background p-6 rounded-lg shadow-lg max-w-lg w-full relative text-black"
       >
         <button
           id="modal-close-button"
           onClick={onClose}
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
         >
-          &times;
+          <X className="h-4 w-4" />
         </button>
-        <div className="h-96 overflow-y-auto p-2">
-          {/* Set a fixed height and make content scrollable */}
+        <div className="text-sm text-muted-foreground h-auto overflow-y-auto p-2 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg text-black">
           {children}
         </div>
       </div>
