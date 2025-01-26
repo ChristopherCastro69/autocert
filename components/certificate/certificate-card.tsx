@@ -12,8 +12,9 @@ interface CertificateCardProps {
 export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [name, setName] = useState<string | "John Nommensen Duchac">(
-    "John Nommensen Duchac"
+  const [nameList, setNameList] = useState<{ combined: string }[]>([]);
+  const [name, setName] = useState<string>(() =>
+    nameList.length > 0 ? nameList[0].combined : "John Nommensen Duchac"
   );
   const [fontSize, setFontSize] = useState<number>(24);
   const [isBold, setIsBold] = useState<boolean>(false);
@@ -23,7 +24,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [selectedFont, setSelectedFont] = useState<string>("Arial");
   const [posX, setPosX] = useState<number>(40);
   const [posY, setPosY] = useState<number>(80);
-  const [nameList, setNameList] = useState<any[]>([]);
 
   const handleImageUpload = (file: File) => {
     setSelectedImage(file);
@@ -46,10 +46,23 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     textColor,
     nameList,
   ]);
+
   if (!isOpen) return null;
-  const handleNameList = (newNameList: any[]) => {
+
+  const handleDownload = () => {
+    if (generatedImage) {
+      const a = document.createElement("a");
+      a.href = generatedImage;
+      a.download = "certificate.png";
+      a.click();
+    }
+  };
+
+  const handleNameList = (newNameList: { combined: string }[]) => {
     setNameList(newNameList);
-    console.log("Name list from certificate card: ", nameList);
+    if (newNameList.length > 0) {
+      setName(newNameList[0].combined);
+    }
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -187,6 +200,16 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   className="cursor-pointer"
                 >
                   <p>Generate</p>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  variant={"secondary"}
+                  disabled={!generatedImage}
+                  className="cursor-pointer"
+                  onClick={handleDownload}
+                >
+                  <p>Download</p>
                 </Button>
               </div>
             </div>

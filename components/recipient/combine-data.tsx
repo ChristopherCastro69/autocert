@@ -49,7 +49,7 @@ export default function CombineData({
   return (
     <div className="text-black space-y-2 gap-4">
       <h3>Select Column Names to Display:</h3>
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {Object.keys(data[0] || {}).map((column) => (
           <label key={column} className="flex items-center gap-1">
             <input

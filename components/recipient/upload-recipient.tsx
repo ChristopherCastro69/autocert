@@ -64,21 +64,23 @@ export default function UploadRecipient({
       </Button>
 
       <RecipientCard isOpen={isCardOpen} onClose={() => setIsCardOpen(false)}>
-        <h3 className="text-black">Parsed Data: </h3>
-        <div className="h-80 overflow-y-auto p-2 bg-opacity-50 text-black mb-4">
-          {jsonData.map((entry, index) => (
-            <div key={index} id={`data-entry-${index}`} className="mb-4">
-              <strong>ID: {index}</strong>
-              <pre>{JSON.stringify(entry, null, 2)}</pre>
-            </div>
-          ))}
-        </div>
-        <div className="overflow-y-auto p-2 bg-opacity-50 text-black mb-4  ">
-          <CombineData
-            data={jsonData}
-            onCombine={handleCombine}
-            onSet={handleSet}
-          />
+        <div>
+          <h3 className="text-black">Parsed Data: </h3>
+          <div className="h-80 overflow-y-auto p-2 bg-opacity-50 text-black mb-4">
+            {jsonData.map((entry, index) => (
+              <div key={index} id={`data-entry-${index}`} className="mb-4">
+                <strong>ID: {index}</strong>
+                <pre>{JSON.stringify(entry, null, 2)}</pre>
+              </div>
+            ))}
+          </div>
+          <div className="overflow-y-auto p-2 bg-opacity-50 text-black mb-4  ">
+            <CombineData
+              data={jsonData}
+              onCombine={handleCombine}
+              onSet={handleSet}
+            />
+          </div>
         </div>
       </RecipientCard>
     </div>
