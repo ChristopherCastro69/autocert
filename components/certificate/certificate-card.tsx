@@ -3,6 +3,7 @@ import Toolbar from "../toolbar";
 import GoogleCert from "./../../app/public/images/gdg-cert.png";
 import { Button } from "../ui/button";
 import { XIcon } from "lucide-react";
+import GenerateCertificate from "../generate-certificate";
 
 interface CertificateCardProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface CertificateCardProps {
 export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [nameList, setNameList] = useState<{ combined: string }[]>([]);
   const [name, setName] = useState<string>(() =>
     nameList.length > 0 ? nameList[0].combined : "John Nommensen Duchac"
@@ -49,13 +51,74 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
 
   if (!isOpen) return null;
 
-  const handleDownload = () => {
-    if (generatedImage) {
-      const a = document.createElement("a");
-      a.href = generatedImage;
-      a.download = "certificate.png";
-      a.click();
+  const handleGenerate = () => {
+    const count = nameList.length;
+
+    console.log("Count", count);
+    setIsDownloading(true);
+    const generateAndDownload = (index: number) => {
+      if (index >= count) return;
+
+      setName(nameList[index].combined);
+      console.log(
+        `Name ${index}: "${nameList[index].combined}" where Count = ${index}`
+      );
+
+      generateCertificate();
+      setTimeout(() => {
+        generateAndDownload(index + 1);
+      }, 2000);
+    };
+
+    generateAndDownload(0);
+  };
+
+  const generateCertificate = () => {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+
+    if (selectedImage) {
+      const image = new Image();
+      image.src = URL.createObjectURL(selectedImage);
+
+      image.onload = () => {
+        canvas.width = image.width;
+        canvas.height = image.height;
+
+        if (context) {
+          context.drawImage(image, 0, 0);
+
+          context.font = ` ${isBold ? "bold" : ""} ${isItalic ? "italic" : ""} ${fontSize}px ${selectedFont}`;
+          context.fillStyle = `${textColor}`;
+          context.textAlign = "center";
+          context.fillText(name, posX, posY);
+
+          if (isUnderline) {
+            context.strokeStyle = textColor;
+            context.lineWidth = 2;
+            const textWidth = context.measureText(name).width;
+            context.beginPath();
+            context.moveTo(posX - textWidth / 2, posY + 2);
+            context.lineTo(posX + textWidth / 2, posY + 2);
+            context.stroke();
+          }
+
+          const imageData = canvas.toDataURL("image/png");
+          setGeneratedImage(imageData);
+          console.log("Image Data: ", name);
+          if (isDownloading) {
+            handleDownload(imageData);
+          }
+        }
+      };
     }
+  };
+
+  const handleDownload = (imageData: string) => {
+    const a = document.createElement("a");
+    a.href = imageData;
+    a.download = `${name}.png`;
+    a.click();
   };
 
   const handleNameList = (newNameList: { combined: string }[]) => {
@@ -96,41 +159,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
 
   const handlePosY = (value: number) => {
     setPosY(value);
-  };
-
-  const generateCertificate = () => {
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-
-    if (selectedImage) {
-      const image = new Image();
-      image.src = URL.createObjectURL(selectedImage);
-
-      image.onload = () => {
-        canvas.width = image.width;
-        canvas.height = image.height;
-
-        if (context) {
-          context.drawImage(image, 0, 0);
-
-          context.font = ` ${isBold ? "bold" : ""} ${isItalic ? "italic" : ""} ${fontSize}px ${selectedFont}`;
-          context.fillStyle = `${textColor}`;
-          context.textAlign = "center";
-          context.fillText(name, posX, posY);
-
-          if (isUnderline) {
-            context.strokeStyle = textColor;
-            context.lineWidth = 2;
-            const textWidth = context.measureText(name).width;
-            context.beginPath();
-            context.moveTo(posX - textWidth / 2, posY + 2);
-            context.lineTo(posX + textWidth / 2, posY + 2);
-            context.stroke();
-          }
-          setGeneratedImage(canvas.toDataURL("image/png"));
-        }
-      };
-    }
   };
 
   return (
@@ -196,8 +224,9 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   asChild
                   size="sm"
                   variant={"secondary"}
-                  disabled={!generatedImage}
+                  // disabled={!generatedImage}
                   className="cursor-pointer"
+                  onClick={handleGenerate}
                 >
                   <p>Generate</p>
                 </Button>
