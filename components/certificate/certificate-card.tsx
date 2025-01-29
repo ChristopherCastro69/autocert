@@ -3,8 +3,19 @@ import Toolbar from "../toolbar";
 import GoogleCert from "./../../app/public/images/gdg-cert.png";
 import { Button } from "../ui/button";
 import { XIcon } from "lucide-react";
-import GenerateCertificate from "../generate-certificate";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
 
+import { Label } from "../ui/label";
 interface CertificateCardProps {
   isOpen: boolean;
   onClose: () => void;
@@ -12,7 +23,8 @@ interface CertificateCardProps {
 
 export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<string | null>();
+  const [imageList, setImageList] = useState<string[]>([]);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [nameList, setNameList] = useState<{ combined: string }[]>([]);
   const [name, setName] = useState<string>(() =>
@@ -26,6 +38,9 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [selectedFont, setSelectedFont] = useState<string>("Arial");
   const [posX, setPosX] = useState<number>(40);
   const [posY, setPosY] = useState<number>(80);
+  const [isImageFinal, setIsImageFinal] = useState<boolean>(false);
+
+  const [imageListModal, setImageListModal] = useState<boolean>(false);
 
   const handleImageUpload = (file: File) => {
     setSelectedImage(file);
@@ -54,10 +69,22 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const handleGenerate = () => {
     const count = nameList.length;
 
-    console.log("Count", count);
+    if (count === 0) {
+      console.error("Name list is empty. Cannot generate certificates.");
+      return;
+    }
+
+    const zip = new JSZip();
     setIsDownloading(true);
+
     const generateAndDownload = (index: number) => {
-      if (index >= count) return;
+      if (index >= count) {
+        imageList.forEach((image, index) => {
+          console.log(`Image ${index} = ${image}`);
+        });
+        setImageListModal(true);
+        return;
+      }
 
       setName(nameList[index].combined);
       console.log(
@@ -103,15 +130,27 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
             context.stroke();
           }
 
-          const imageData = canvas.toDataURL("image/png");
-          setGeneratedImage(imageData);
-          console.log("Image Data: ", name);
-          if (isDownloading) {
-            handleDownload(imageData);
-          }
+          // if (isDownloading) {
+          //   handleMultipleImages(imageData);
+          // }
+        }
+        const imageData = canvas.toDataURL("image/png");
+        setGeneratedImage(imageData);
+        if (isImageFinal) {
+          setImageList((prevList) => {
+            if (!prevList.includes(imageData)) {
+              return [...prevList, imageData];
+            }
+            return prevList;
+          });
         }
       };
     }
+  };
+
+  const handleMultipleImages = (imageData: string) => {
+    const a = document.createElement("a");
+    a.href = imageData;
   };
 
   const handleDownload = (imageData: string) => {
@@ -140,6 +179,9 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
 
   const handleItalicToggle = () => {
     setIsItalic(!isItalic);
+  };
+  const handleFinalImage = () => {
+    setIsImageFinal(!isImageFinal);
   };
 
   const handleUnderlineToggle = () => {
@@ -179,7 +221,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         </button>
         <div className="lg:h-[550px] overflow-y-auto w-full p-2">
           <div className="grid grid-cols-3 grid-flow-col">
-            <div className="p-4 col-span-2">
+            <div className="p-4 col-span-2 ">
               {generatedImage ? (
                 <img
                   src={generatedImage}
@@ -194,6 +236,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                 />
               )}
             </div>
+
             <div className="col-span-1 border border-gray-300 bg-white rounded-lg shadow-sm p-4">
               <div className="items-center justify-center">
                 <Toolbar
@@ -208,6 +251,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   handlePosX={handlePosX}
                   handlePosY={handlePosY}
                   handleTextColorChange={handleTextColorChange}
+                  handleFinalImage={handleFinalImage}
                   name={name}
                   fontSize={fontSize}
                   selectedFont={selectedFont}
@@ -217,6 +261,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   posX={posX}
                   posY={posY}
                   textColor={textColor}
+                  isImageFinal={isImageFinal}
                 />
               </div>
               <div className="absolute bottom-0 right-2 flex gap-2 p-4">
@@ -224,7 +269,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   asChild
                   size="sm"
                   variant={"secondary"}
-                  // disabled={!generatedImage}
                   className="cursor-pointer"
                   onClick={handleGenerate}
                 >
@@ -236,10 +280,41 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   variant={"secondary"}
                   disabled={!generatedImage}
                   className="cursor-pointer"
-                  onClick={handleDownload}
+                  onClick={() =>
+                    generatedImage && handleDownload(generatedImage)
+                  }
                 >
                   <p>Download</p>
                 </Button>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">Edit Profile</Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px] max-h-[500px] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Edit profile</DialogTitle>
+                      <DialogDescription>
+                        {imageList.map((imageData, index) => (
+                          <li key={index}>
+                            <img
+                              src={imageData}
+                              alt={`Image ${index + 1}`}
+                              className="w-full"
+                            />
+                          </li>
+                        ))}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4"></div>
+                      <div className="grid grid-cols-4 items-center gap-4"></div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit">Save changes</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </div>
