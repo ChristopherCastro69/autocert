@@ -39,7 +39,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [posX, setPosX] = useState<number>(40);
   const [posY, setPosY] = useState<number>(80);
   const [isImageFinal, setIsImageFinal] = useState<boolean>(false);
-
   const [imageListModal, setImageListModal] = useState<boolean>(false);
 
   const handleImageUpload = (file: File) => {
@@ -70,7 +69,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     const count = nameList.length;
 
     if (count === 0) {
-      console.error("Name list is empty. Cannot generate certificates.");
       return;
     }
 
@@ -79,9 +77,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
 
     const generateAndDownload = (index: number) => {
       if (index >= count) {
-        imageList.forEach((image, index) => {
-          console.log(`Image ${index} = ${image}`);
-        });
         setImageListModal(true);
         return;
       }
@@ -148,9 +143,27 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     }
   };
 
-  const handleMultipleImages = (imageData: string) => {
-    const a = document.createElement("a");
-    a.href = imageData;
+  const handleZipDownload = () => {
+    const zip = new JSZip();
+
+    // Add each image from the imageList to the zip
+    imageList.forEach((imageData, index) => {
+      // Convert the data URL to a Blob
+      const byteString = atob(imageData.split(",")[1]);
+      const mimeString = imageData.split(",")[0].split(":")[1].split(";")[0];
+      const ab = new Uint8Array(byteString.length);
+
+      for (let i = 0; i < byteString.length; i++) {
+        ab[i] = byteString.charCodeAt(i);
+      }
+
+      zip.file(`certificate_${index + 1}.png`, ab, { binary: true });
+    });
+
+    // Generate the zip file and trigger the download
+    zip.generateAsync({ type: "blob" }).then((content) => {
+      saveAs(content, "certificates.zip");
+    });
   };
 
   const handleDownload = (imageData: string) => {
@@ -287,10 +300,10 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   <p>Download</p>
                 </Button>
 
-                <Dialog>
-                  <DialogTrigger asChild>
+                <Dialog open={imageListModal} onOpenChange={setImageListModal}>
+                  {/* <DialogTrigger asChild>
                     <Button variant="outline">Edit Profile</Button>
-                  </DialogTrigger>
+                  </DialogTrigger> */}
                   <DialogContent className="sm:max-w-[425px] max-h-[500px] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>Edit profile</DialogTitle>
@@ -311,7 +324,9 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                       <div className="grid grid-cols-4 items-center gap-4"></div>
                     </div>
                     <DialogFooter>
-                      <Button type="submit">Save changes</Button>
+                      <Button type="submit" onClick={handleZipDownload}>
+                        Download All
+                      </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
