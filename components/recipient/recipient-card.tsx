@@ -21,7 +21,7 @@ export function RecipientCard({
     >
       <div
         id="modal-content"
-        className="bg-background p-6 rounded-lg shadow-lg max-w-lg w-full relative text-black"
+        className="bg-white p-6 rounded-lg shadow-lg max-w-[800px] w-full relative text-black"
       >
         <button
           id="modal-close-button"

@@ -5,6 +5,8 @@ import Papa from "papaparse";
 import CombineData from "@/components/recipient/combine-data";
 import { RecipientCard } from "./recipient-card";
 import { json } from "stream/consumers";
+import { ScrollArea } from "../ui/scroll-area";
+import { Card, CardContent, CardDescription, CardTitle } from "../ui/card";
 
 export default function UploadRecipient({
   setDisplayData,
@@ -65,21 +67,27 @@ export default function UploadRecipient({
 
       <RecipientCard isOpen={isCardOpen} onClose={() => setIsCardOpen(false)}>
         <div>
-          <h3 className="text-black">Parsed Data: </h3>
-          <div className="h-80 overflow-y-auto p-2 bg-opacity-50 text-black mb-4">
-            {jsonData.map((entry, index) => (
-              <div key={index} id={`data-entry-${index}`} className="mb-4">
-                <strong>ID: {index}</strong>
-                <pre>{JSON.stringify(entry, null, 2)}</pre>
-              </div>
-            ))}
-          </div>
-          <div className="overflow-y-auto p-2 bg-opacity-50 text-black mb-4  ">
-            <CombineData
-              data={jsonData}
-              onCombine={handleCombine}
-              onSet={handleSet}
-            />
+          <div className=" grid grid-cols-3 grid-flow-col gap-2">
+            <div className="col-span-2">
+              <ScrollArea className="h-80 w-auto p-2 rounded-md border text-black overflow-x-auto">
+                <h4 className="mb-4 text-sm font-bold leading-none">
+                  Parsed Data:
+                </h4>
+                {jsonData.map((entry, index) => (
+                  <div key={index} id={`data-entry-${index}`} className="mb-4">
+                    <strong>ID: {index}</strong>
+                    <pre>{JSON.stringify(entry, null, 2)}</pre>
+                  </div>
+                ))}
+              </ScrollArea>
+            </div>
+            <div className=" col-span-1 ">
+              <CombineData
+                data={jsonData}
+                onCombine={handleCombine}
+                onSet={handleSet}
+              />
+            </div>
           </div>
         </div>
       </RecipientCard>

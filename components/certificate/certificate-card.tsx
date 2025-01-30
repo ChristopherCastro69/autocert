@@ -141,9 +141,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const handleZipDownload = () => {
     const zip = new JSZip();
 
-    // Add each image from the imageList to the zip
     imageList.forEach((imageData, index) => {
-      // Convert the data URL to a Blob
       const byteString = atob(imageData.split(",")[1]);
       const ab = new Uint8Array(byteString.length);
 
@@ -154,7 +152,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
       zip.file(`certificate_${index + 1}.png`, ab, { binary: true });
     });
 
-    // Generate the zip file and trigger the download
     zip.generateAsync({ type: "blob" }).then((content) => {
       saveAs(content, "certificates.zip");
     });
@@ -313,10 +310,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                         ))}
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4"></div>
-                      <div className="grid grid-cols-4 items-center gap-4"></div>
-                    </div>
+
                     <DialogFooter>
                       <Button type="submit" onClick={handleZipDownload}>
                         Download All
