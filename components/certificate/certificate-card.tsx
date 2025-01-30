@@ -72,7 +72,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
       return;
     }
 
-    const zip = new JSZip();
     setIsDownloading(true);
 
     const generateAndDownload = (index: number) => {
@@ -124,10 +123,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
             context.lineTo(posX + textWidth / 2, posY + 2);
             context.stroke();
           }
-
-          // if (isDownloading) {
-          //   handleMultipleImages(imageData);
-          // }
         }
         const imageData = canvas.toDataURL("image/png");
         setGeneratedImage(imageData);
@@ -150,7 +145,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     imageList.forEach((imageData, index) => {
       // Convert the data URL to a Blob
       const byteString = atob(imageData.split(",")[1]);
-      const mimeString = imageData.split(",")[0].split(":")[1].split(";")[0];
       const ab = new Uint8Array(byteString.length);
 
       for (let i = 0; i < byteString.length; i++) {
