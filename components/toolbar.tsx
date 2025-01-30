@@ -26,6 +26,7 @@ interface ToolbarProps {
   handleTextColorChange: (color: string) => void;
   handlePosX: (value: number) => void;
   handlePosY: (value: number) => void;
+  handleFinalImage: () => void;
   name: string;
   fontSize: number;
   selectedFont: string;
@@ -35,6 +36,7 @@ interface ToolbarProps {
   posX: number;
   posY: number;
   textColor: string;
+  isImageFinal: boolean;
 }
 
 const fontOptions = [
@@ -60,10 +62,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
   handleTextColorChange,
   handlePosX,
   handlePosY,
+  handleFinalImage,
   fontSize,
   isBold,
   isItalic,
   isUnderline,
+  isImageFinal,
   textColor,
 }) => {
   return (
@@ -161,6 +165,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <p className="mt-2">Fill</p>
 
         <ColorPicker color={textColor} onChange={handleTextColorChange} />
+        <Button
+          variant={"typography"}
+          size={"full"}
+          className={`${isImageFinal ? "bg-gray-200 text-black" : "bg-white text-grey"} hover:bg-gray-200 focus:ring-black`}
+          onClick={handleFinalImage}
+        >
+          <p className="">Finalize Image</p>
+        </Button>
       </div>
     </div>
   );
