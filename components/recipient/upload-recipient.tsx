@@ -7,6 +7,13 @@ import { RecipientCard } from "./recipient-card";
 import { json } from "stream/consumers";
 import { ScrollArea } from "../ui/scroll-area";
 import { Card, CardContent, CardDescription, CardTitle } from "../ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 
 export default function UploadRecipient({
   setDisplayData,
@@ -65,11 +72,14 @@ export default function UploadRecipient({
         Upload Recipient List
       </Button>
 
-      <RecipientCard isOpen={isCardOpen} onClose={() => setIsCardOpen(false)}>
-        <div>
+      <Dialog open={isCardOpen} onOpenChange={() => setIsCardOpen(false)}>
+        <DialogContent className="max-w-[800px] max-h-[550px] bg-white">
+          <DialogHeader>
+            <DialogTitle>Set Certificate Name:</DialogTitle>
+          </DialogHeader>
           <div className=" grid grid-cols-3 grid-flow-col gap-2">
             <div className="col-span-2">
-              <ScrollArea className="h-80 w-auto p-2 rounded-md border text-black overflow-x-auto">
+              <ScrollArea className="h-96 w-auto p-2 rounded-md border text-black overflow-x-auto">
                 <h4 className="mb-4 text-sm font-bold leading-none">
                   Parsed Data:
                 </h4>
@@ -89,8 +99,13 @@ export default function UploadRecipient({
               />
             </div>
           </div>
-        </div>
-      </RecipientCard>
+          <DialogFooter>
+            <Button type="submit" variant={"default"} size={"sm"}>
+              Set Data
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
