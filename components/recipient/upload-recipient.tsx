@@ -100,7 +100,12 @@ export default function UploadRecipient({
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" variant={"default"} size={"sm"}>
+            <Button
+              type="submit"
+              variant={"default"}
+              size={"sm"}
+              onClick={() => handleSet(jsonData)}
+            >
               Set Data
             </Button>
           </DialogFooter>
