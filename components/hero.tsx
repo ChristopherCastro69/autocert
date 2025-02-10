@@ -1,6 +1,7 @@
 "use client";
 import Certificate from "./../app/public/images/certificate.jpg";
 import GenerateCertificate from "./generate-certificate";
+import SendEmail from "./send-email";
 
 export default function Header() {
   return (
@@ -13,8 +14,9 @@ export default function Header() {
           Create/Edit & Send Certificates in Bulk with Ease!
         </p>
 
-        <div className="flex lg:flex-row flex-col gap-2 mt-6">
+        <div className="flex lg:flex-row flex-col gap-4 mt-6">
           <GenerateCertificate />
+          <SendEmail />
         </div>
       </div>
       <div className="p-4">
