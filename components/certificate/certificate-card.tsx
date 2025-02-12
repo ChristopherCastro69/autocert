@@ -40,6 +40,15 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [posY, setPosY] = useState<number>(80);
   const [isImageFinal, setIsImageFinal] = useState<boolean>(false);
   const [imageListModal, setImageListModal] = useState<boolean>(false);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [initialMousePos, setInitialMousePos] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [initialPos, setInitialPos] = useState<{ x: number; y: number }>({
+    x: posX,
+    y: posY,
+  });
 
   const handleImageUpload = (file: File) => {
     setSelectedImage(file);
@@ -62,6 +71,41 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     textColor,
     nameList,
   ]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setInitialMousePos({ x: e.clientX, y: e.clientY });
+    setInitialPos({ x: posX, y: posY });
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (isDragging && initialMousePos) {
+      const dx = e.clientX - initialMousePos.x;
+      const dy = e.clientY - initialMousePos.y;
+      setPosX(initialPos.x + dx);
+      setPosY(initialPos.y + dy);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setInitialMousePos(null);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    } else {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging]);
 
   if (!isOpen) return null;
 
@@ -223,10 +267,14 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         >
           <XIcon className="w-4 h-4" />
         </button>
-        <div className="lg:h-[550px] overflow-y-auto w-full p-2">
+        <div
+          className="lg:h-[550px] overflow-y-auto w-full p-2 "
+          onMouseDown={handleMouseDown}
+        >
           <div className="grid grid-cols-3 grid-flow-col">
             <div className="p-4 col-span-2 ">
               {generatedImage ? (
+                
                 <img
                   src={generatedImage}
                   alt="Generated Certificate"
