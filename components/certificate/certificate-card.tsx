@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Toolbar from "../toolbar";
 import GoogleCert from "./../../app/public/images/gdg-cert.png";
+import DefaultCert from "./../../app/public/images/Default.png";
+
 import { Button } from "../ui/button";
 import { XIcon } from "lucide-react";
 import JSZip from "jszip";
@@ -15,7 +17,6 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 
-import { Label } from "../ui/label";
 interface CertificateCardProps {
   isOpen: boolean;
   onClose: () => void;
@@ -271,10 +272,9 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
           className="lg:h-[550px] overflow-y-auto w-full p-2 "
           onMouseDown={handleMouseDown}
         >
-          <div className="grid grid-cols-3 grid-flow-col">
-            <div className="p-4 col-span-2 ">
+          <div className="grid grid-cols-3 grid-flow-col gap-4">
+            <div className="p-2 col-span-2 ">
               {generatedImage ? (
-                
                 <img
                   src={generatedImage}
                   alt="Generated Certificate"
@@ -282,7 +282,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                 />
               ) : (
                 <img
-                  src={GoogleCert.src}
+                  src={DefaultCert.src}
                   alt="Certificate"
                   className="w-full"
                 />
