@@ -22,6 +22,18 @@ interface CertificateCardProps {
   onClose: () => void;
 }
 
+interface TextProperties {
+  name: string;
+  fontSize: number;
+  isBold: boolean;
+  isItalic: boolean;
+  isUnderline: boolean;
+  textColor: string;
+  selectedFont: string;
+  posX: number;
+  posY: number;
+}
+
 function debounce<T extends (...args: any[]) => void>(func: T, delay: number) {
   let timeoutId: NodeJS.Timeout | null = null;
 
@@ -41,17 +53,17 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [imageList, setImageList] = useState<string[]>([]);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [nameList, setNameList] = useState<{ combined: string }[]>([]);
-  const [name, setName] = useState<string>(() =>
-    nameList.length > 0 ? nameList[0].combined : "John Nommensen Duchac"
-  );
-  const [fontSize, setFontSize] = useState<number>(24);
-  const [isBold, setIsBold] = useState<boolean>(false);
-  const [isItalic, setIsItalic] = useState<boolean>(false);
-  const [isUnderline, setIsUnderline] = useState<boolean>(false);
-  const [textColor, setTextColor] = useState<string>("#000000");
-  const [selectedFont, setSelectedFont] = useState<string>("Arial");
-  const [posX, setPosX] = useState<number>(40);
-  const [posY, setPosY] = useState<number>(80);
+  const [textProps, setTextProps] = useState<TextProperties>({
+    name: "John Nommensen Duchac",
+    fontSize: 100,
+    isBold: false,
+    isItalic: false,
+    isUnderline: false,
+    textColor: "#000000",
+    selectedFont: "Arial",
+    posX: 500,
+    posY: 300,
+  });
   const [isImageFinal, setIsImageFinal] = useState<boolean>(false);
   const [imageListModal, setImageListModal] = useState<boolean>(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -60,14 +72,19 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     y: number;
   } | null>(null);
   const [initialPos, setInitialPos] = useState<{ x: number; y: number }>({
-    x: posX,
-    y: posY,
+    x: textProps.posX,
+    y: textProps.posY,
   });
 
   // Memoize the font style to avoid recalculating on every render
   const fontStyle = useMemo(() => {
-    return `${isBold ? "bold" : ""} ${isItalic ? "italic" : ""} ${fontSize}px ${selectedFont}`;
-  }, [isBold, isItalic, fontSize, selectedFont]);
+    return `${textProps.isBold ? "bold" : ""} ${textProps.isItalic ? "italic" : ""} ${textProps.fontSize}px ${textProps.selectedFont}`;
+  }, [
+    textProps.isBold,
+    textProps.isItalic,
+    textProps.fontSize,
+    textProps.selectedFont,
+  ]);
 
   const handleImageUpload = useCallback((file: File) => {
     setSelectedImage(file);
@@ -88,7 +105,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         return;
       }
 
-      setName(nameList[index].combined);
+      setTextProps((prev) => ({ ...prev, name: nameList[index].combined }));
       console.log(
         `Name ${index}: "${nameList[index].combined}" where Count = ${index}`
       );
@@ -118,17 +135,17 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
           context.drawImage(image, 0, 0);
 
           context.font = fontStyle; // Use the memoized font style
-          context.fillStyle = `${textColor}`;
+          context.fillStyle = textProps.textColor;
           context.textAlign = "center";
-          context.fillText(name, posX, posY);
+          context.fillText(textProps.name, textProps.posX, textProps.posY);
 
-          if (isUnderline) {
-            context.strokeStyle = textColor;
+          if (textProps.isUnderline) {
+            context.strokeStyle = textProps.textColor;
             context.lineWidth = 2;
-            const textWidth = context.measureText(name).width;
+            const textWidth = context.measureText(textProps.name).width;
             context.beginPath();
-            context.moveTo(posX - textWidth / 2, posY + 2);
-            context.lineTo(posX + textWidth / 2, posY + 2);
+            context.moveTo(textProps.posX - textWidth / 2, textProps.posY + 2);
+            context.lineTo(textProps.posX + textWidth / 2, textProps.posY + 2);
             context.stroke();
           }
         }
@@ -144,7 +161,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         }
       };
     }
-  }, [selectedImage, name, fontStyle, posX, posY, textColor, isImageFinal]);
+  }, [selectedImage, textProps, fontStyle, isImageFinal]);
 
   // Debounce the generateCertificate function
   const debouncedGenerateCertificate = useCallback(
@@ -158,15 +175,15 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     }
   }, [
     selectedImage,
-    name,
-    fontSize,
-    isBold,
-    isItalic,
-    isUnderline,
-    selectedFont,
-    posX,
-    posY,
-    textColor,
+    textProps.name,
+    textProps.fontSize,
+    textProps.isBold,
+    textProps.isItalic,
+    textProps.isUnderline,
+    textProps.selectedFont,
+    textProps.posX,
+    textProps.posY,
+    textProps.textColor,
     nameList,
   ]);
 
@@ -195,30 +212,33 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     }
   }, [
     selectedImage,
-    name,
-    fontSize,
-    isBold,
-    isItalic,
-    isUnderline,
-    selectedFont,
-    posX,
-    posY,
-    textColor,
+    textProps.name,
+    textProps.fontSize,
+    textProps.isBold,
+    textProps.isItalic,
+    textProps.isUnderline,
+    textProps.selectedFont,
+    textProps.posX,
+    textProps.posY,
+    textProps.textColor,
     nameList,
   ]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
     setInitialMousePos({ x: e.clientX, y: e.clientY });
-    setInitialPos({ x: posX, y: posY });
+    setInitialPos({ x: textProps.posX, y: textProps.posY });
   };
 
   const handleMouseMove = (e: MouseEvent) => {
     if (isDragging && initialMousePos) {
       const dx = e.clientX - initialMousePos.x;
       const dy = e.clientY - initialMousePos.y;
-      setPosX(initialPos.x + dx);
-      setPosY(initialPos.y + dy);
+      setTextProps((prev) => ({
+        ...prev,
+        posX: initialPos.x + dx,
+        posY: initialPos.y + dy,
+      }));
     }
   };
 
@@ -247,51 +267,55 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const handleDownload = (imageData: string) => {
     const a = document.createElement("a");
     a.href = imageData;
-    a.download = `${name}.png`;
+    a.download = `${textProps.name}.png`;
     a.click();
   };
 
   const handleNameList = (newNameList: { combined: string }[]) => {
     setNameList(newNameList);
     if (newNameList.length > 0) {
-      setName(newNameList[0].combined);
+      setTextProps((prev) => ({ ...prev, name: newNameList[0].combined }));
     }
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
+    setTextProps((prev) => ({ ...prev, name: e.target.value }));
   };
+
   const handleFontSizeChange = (value: number) => {
-    setFontSize(value);
+    setTextProps((prev) => ({ ...prev, fontSize: value }));
   };
+
   const handleBoldToggle = () => {
-    setIsBold(!isBold);
+    setTextProps((prev) => ({ ...prev, isBold: !prev.isBold }));
   };
 
   const handleItalicToggle = () => {
-    setIsItalic(!isItalic);
-  };
-  const handleFinalImage = () => {
-    setIsImageFinal(!isImageFinal);
+    setTextProps((prev) => ({ ...prev, isItalic: !prev.isItalic }));
   };
 
   const handleUnderlineToggle = () => {
-    setIsUnderline(!isUnderline);
+    setTextProps((prev) => ({ ...prev, isUnderline: !prev.isUnderline }));
   };
 
   const handleFontFamilyChange = (font: string) => {
-    setSelectedFont(font);
+    setTextProps((prev) => ({ ...prev, selectedFont: font }));
   };
 
   const handleTextColorChange = (color: string) => {
-    setTextColor(color);
+    setTextProps((prev) => ({ ...prev, textColor: color }));
   };
+
   const handlePosX = (value: number) => {
-    setPosX(value);
+    setTextProps((prev) => ({ ...prev, posX: value }));
   };
 
   const handlePosY = (value: number) => {
-    setPosY(value);
+    setTextProps((prev) => ({ ...prev, posY: value }));
+  };
+
+  const handleFinalImage = () => {
+    setIsImageFinal(!isImageFinal);
   };
 
   return (
@@ -346,15 +370,15 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   handlePosY={handlePosY}
                   handleTextColorChange={handleTextColorChange}
                   handleFinalImage={handleFinalImage}
-                  name={name}
-                  fontSize={fontSize}
-                  selectedFont={selectedFont}
-                  isBold={isBold}
-                  isItalic={isItalic}
-                  isUnderline={isUnderline}
-                  posX={posX}
-                  posY={posY}
-                  textColor={textColor}
+                  name={textProps.name}
+                  fontSize={textProps.fontSize}
+                  selectedFont={textProps.selectedFont}
+                  isBold={textProps.isBold}
+                  isItalic={textProps.isItalic}
+                  isUnderline={textProps.isUnderline}
+                  posX={textProps.posX}
+                  posY={textProps.posY}
+                  textColor={textProps.textColor}
                   isImageFinal={isImageFinal}
                 />
               </div>
