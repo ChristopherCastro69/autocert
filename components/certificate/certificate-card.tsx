@@ -22,6 +22,19 @@ interface CertificateCardProps {
   onClose: () => void;
 }
 
+function debounce<T extends (...args: any[]) => void>(func: T, delay: number) {
+  let timeoutId: NodeJS.Timeout | null = null;
+
+  return function (...args: Parameters<T>) {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => {
+      func(...args);
+    }, delay);
+  };
+}
+
 export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>();
@@ -84,7 +97,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     generateAndDownload(0);
   };
 
-  const generateCertificate = () => {
+  const generateCertificate = useCallback(() => {
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
 
@@ -126,7 +139,43 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         }
       };
     }
-  };
+  }, [
+    selectedImage,
+    name,
+    fontSize,
+    isBold,
+    isItalic,
+    isUnderline,
+    selectedFont,
+    posX,
+    posY,
+    textColor,
+    isImageFinal,
+  ]);
+
+  // Debounce the generateCertificate function
+  const debouncedGenerateCertificate = useCallback(
+    debounce(generateCertificate, 300),
+    [generateCertificate]
+  );
+
+  useEffect(() => {
+    if (selectedImage) {
+      debouncedGenerateCertificate();
+    }
+  }, [
+    selectedImage,
+    name,
+    fontSize,
+    isBold,
+    isItalic,
+    isUnderline,
+    selectedFont,
+    posX,
+    posY,
+    textColor,
+    nameList,
+  ]);
 
   const handleZipDownload = () => {
     const zip = new JSZip();
