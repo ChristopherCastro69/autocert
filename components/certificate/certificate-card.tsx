@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Toolbar from "../toolbar";
 import GoogleCert from "./../../app/public/images/gdg-cert.png";
 import DefaultCert from "./../../app/public/images/Default.png";
@@ -64,6 +64,11 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     y: posY,
   });
 
+  // Memoize the font style to avoid recalculating on every render
+  const fontStyle = useMemo(() => {
+    return `${isBold ? "bold" : ""} ${isItalic ? "italic" : ""} ${fontSize}px ${selectedFont}`;
+  }, [isBold, isItalic, fontSize, selectedFont]);
+
   const handleImageUpload = useCallback((file: File) => {
     setSelectedImage(file);
   }, []);
@@ -112,7 +117,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         if (context) {
           context.drawImage(image, 0, 0);
 
-          context.font = ` ${isBold ? "bold" : ""} ${isItalic ? "italic" : ""} ${fontSize}px ${selectedFont}`;
+          context.font = fontStyle; // Use the memoized font style
           context.fillStyle = `${textColor}`;
           context.textAlign = "center";
           context.fillText(name, posX, posY);
@@ -139,23 +144,11 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         }
       };
     }
-  }, [
-    selectedImage,
-    name,
-    fontSize,
-    isBold,
-    isItalic,
-    isUnderline,
-    selectedFont,
-    posX,
-    posY,
-    textColor,
-    isImageFinal,
-  ]);
+  }, [selectedImage, name, fontStyle, posX, posY, textColor, isImageFinal]);
 
   // Debounce the generateCertificate function
   const debouncedGenerateCertificate = useCallback(
-    debounce(generateCertificate, 300),
+    debounce(generateCertificate, 50),
     [generateCertificate]
   );
 
