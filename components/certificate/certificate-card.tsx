@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Toolbar from "../toolbar";
 import GoogleCert from "./../../app/public/images/gdg-cert.png";
+import DefaultCert from "./../../app/public/images/Default.png";
+
 import { Button } from "../ui/button";
 import { XIcon } from "lucide-react";
 import JSZip from "jszip";
@@ -15,7 +17,6 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 
-import { Label } from "../ui/label";
 interface CertificateCardProps {
   isOpen: boolean;
   onClose: () => void;
@@ -40,30 +41,19 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [posY, setPosY] = useState<number>(80);
   const [isImageFinal, setIsImageFinal] = useState<boolean>(false);
   const [imageListModal, setImageListModal] = useState<boolean>(false);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [initialMousePos, setInitialMousePos] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [initialPos, setInitialPos] = useState<{ x: number; y: number }>({
+    x: posX,
+    y: posY,
+  });
 
-  const handleImageUpload = (file: File) => {
+  const handleImageUpload = useCallback((file: File) => {
     setSelectedImage(file);
-  };
-
-  useEffect(() => {
-    if (selectedImage) {
-      generateCertificate();
-    }
-  }, [
-    selectedImage,
-    name,
-    fontSize,
-    isBold,
-    isItalic,
-    isUnderline,
-    selectedFont,
-    posX,
-    posY,
-    textColor,
-    nameList,
-  ]);
-
-  if (!isOpen) return null;
+  }, []);
 
   const handleGenerate = () => {
     const count = nameList.length;
@@ -157,6 +147,61 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     });
   };
 
+  useEffect(() => {
+    if (selectedImage) {
+      generateCertificate();
+    }
+  }, [
+    selectedImage,
+    name,
+    fontSize,
+    isBold,
+    isItalic,
+    isUnderline,
+    selectedFont,
+    posX,
+    posY,
+    textColor,
+    nameList,
+  ]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setInitialMousePos({ x: e.clientX, y: e.clientY });
+    setInitialPos({ x: posX, y: posY });
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (isDragging && initialMousePos) {
+      const dx = e.clientX - initialMousePos.x;
+      const dy = e.clientY - initialMousePos.y;
+      setPosX(initialPos.x + dx);
+      setPosY(initialPos.y + dy);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setInitialMousePos(null);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    } else {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging]);
+
+  if (!isOpen) return null;
+
   const handleDownload = (imageData: string) => {
     const a = document.createElement("a");
     a.href = imageData;
@@ -223,9 +268,12 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         >
           <XIcon className="w-4 h-4" />
         </button>
-        <div className="lg:h-[550px] overflow-y-auto w-full p-2">
-          <div className="grid grid-cols-3 grid-flow-col">
-            <div className="p-4 col-span-2 ">
+        <div
+          className="lg:h-[550px] overflow-y-auto w-full p-2 "
+          onMouseDown={handleMouseDown}
+        >
+          <div className="grid grid-cols-3 grid-flow-col gap-4">
+            <div className="p-2 col-span-2 ">
               {generatedImage ? (
                 <img
                   src={generatedImage}
@@ -234,7 +282,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                 />
               ) : (
                 <img
-                  src={GoogleCert.src}
+                  src={DefaultCert.src}
                   alt="Certificate"
                   className="w-full"
                 />

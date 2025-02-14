@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import { Button } from "../ui/button";
+import { useImageUpload } from "./useImageUpload";
 
 interface UploadCertificateProps {
   handleImageUpload: (file: File) => void;
@@ -8,18 +9,8 @@ interface UploadCertificateProps {
 const UploadCertificate: React.FC<UploadCertificateProps> = ({
   handleImageUpload,
 }) => {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleImageUpload(file);
-    }
-  };
-
-  const handleButtonClick = () => {
-    fileInputRef.current?.click();
-  };
+  const { fileInputRef, handleImageChange, triggerFileInput } =
+    useImageUpload(handleImageUpload);
 
   return (
     <div>
@@ -27,7 +18,7 @@ const UploadCertificate: React.FC<UploadCertificateProps> = ({
         type="button"
         variant={"ghost"}
         size={"full"}
-        onClick={handleButtonClick}
+        onClick={triggerFileInput}
       >
         Upload Certificate Template
       </Button>
