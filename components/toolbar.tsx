@@ -1,5 +1,5 @@
 import UploadRecipient from "./recipient/upload-recipient";
-import UploadCertificate from "./certificate/upload-certificate";
+import UploadCertificate from "./upload-certificate/upload-certificate";
 import { Slider } from "@/components/ui/slider";
 import {
   Select,
