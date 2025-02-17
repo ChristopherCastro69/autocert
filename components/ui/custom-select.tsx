@@ -4,27 +4,33 @@ interface CustomSelectProps {
   options: number[];
   value: number;
   onChange: (value: number) => void;
+  disabled?: boolean;
 }
 
 const CustomSelect: React.FC<CustomSelectProps> = ({
   options,
   value,
   onChange,
+  disabled = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value.toString());
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleSelect = (option: number) => {
-    setInputValue(option.toString());
-    onChange(option);
-    setIsOpen(false);
+    if (!disabled) {
+      setInputValue(option.toString());
+      onChange(option);
+      setIsOpen(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = Number(e.target.value);
-    setInputValue(newValue.toString());
-    onChange(newValue);
+    if (!disabled) {
+      const newValue = Number(e.target.value);
+      setInputValue(newValue.toString());
+      onChange(newValue);
+    }
   };
 
   const handleClickOutside = (event: MouseEvent) => {
@@ -49,11 +55,14 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
         type="text"
         value={inputValue}
         onChange={handleInputChange}
-        onFocus={() => setIsOpen(true)}
-        className="h-10 w-[70px] border border-gray-300 rounded-md text-center pr-8 focus:outline-none focus:ring-2  cursor-pointer"
+        onFocus={() => !disabled && setIsOpen(true)}
+        className={`h-10 w-[70px] border border-gray-300 rounded-md text-center pr-8 focus:outline-none focus:ring-2 cursor-pointer ${disabled ? "bg-gray-200 cursor-not-allowed" : ""}`}
         placeholder="Size"
+        disabled={disabled}
       />
-      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-500">
+      <span
+        className={`absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-500 ${disabled ? "opacity-50" : ""}`}
+      >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-4 w-4"
@@ -69,7 +78,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
           />
         </svg>
       </span>
-      {isOpen && (
+      {isOpen && !disabled && (
         <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg h-40 overflow-y-auto">
           {options.map((option) => (
             <div

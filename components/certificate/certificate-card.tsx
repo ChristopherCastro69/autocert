@@ -34,19 +34,6 @@ interface TextProperties {
   posY: number;
 }
 
-function debounce<T extends (...args: any[]) => void>(func: T, delay: number) {
-  let timeoutId: NodeJS.Timeout | null = null;
-
-  return function (...args: Parameters<T>) {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    timeoutId = setTimeout(() => {
-      func(...args);
-    }, delay);
-  };
-}
-
 export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>();
@@ -163,30 +150,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     }
   }, [selectedImage, textProps, fontStyle, isImageFinal]);
 
-  // Debounce the generateCertificate function
-  const debouncedGenerateCertificate = useCallback(
-    debounce(generateCertificate, 50),
-    [generateCertificate]
-  );
-
-  useEffect(() => {
-    if (selectedImage) {
-      debouncedGenerateCertificate();
-    }
-  }, [
-    selectedImage,
-    textProps.name,
-    textProps.fontSize,
-    textProps.isBold,
-    textProps.isItalic,
-    textProps.isUnderline,
-    textProps.selectedFont,
-    textProps.posX,
-    textProps.posY,
-    textProps.textColor,
-    nameList,
-  ]);
-
   const handleZipDownload = () => {
     const zip = new JSZip();
 
@@ -223,44 +186,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     textProps.textColor,
     nameList,
   ]);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setInitialMousePos({ x: e.clientX, y: e.clientY });
-    setInitialPos({ x: textProps.posX, y: textProps.posY });
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (isDragging && initialMousePos) {
-      const dx = e.clientX - initialMousePos.x;
-      const dy = e.clientY - initialMousePos.y;
-      setTextProps((prev) => ({
-        ...prev,
-        posX: initialPos.x + dx,
-        posY: initialPos.y + dy,
-      }));
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    setInitialMousePos(null);
-  };
-
-  useEffect(() => {
-    if (isDragging) {
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
-    } else {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    }
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isDragging]);
 
   if (!isOpen) return null;
 
@@ -314,8 +239,8 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     setTextProps((prev) => ({ ...prev, posY: value }));
   };
 
-  const handleFinalImage = () => {
-    setIsImageFinal(!isImageFinal);
+  const handleFinalImage = (final: boolean) => {
+    setIsImageFinal(final);
   };
 
   return (
@@ -334,10 +259,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         >
           <XIcon className="w-4 h-4" />
         </button>
-        <div
-          className="lg:h-[550px] overflow-y-auto w-full p-2 "
-          onMouseDown={handleMouseDown}
-        >
+        <div className="lg:h-[585 px] overflow-y-auto w-full p-2 ">
           <div className="grid grid-cols-3 grid-flow-col gap-4">
             <div className="p-2 col-span-2 ">
               {generatedImage ? (
@@ -382,59 +304,58 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   isImageFinal={isImageFinal}
                 />
               </div>
-              <div className="absolute bottom-0 right-2 flex gap-2 p-4">
-                <Button
-                  asChild
-                  size="sm"
-                  variant={"secondary"}
-                  className="cursor-pointer"
-                  onClick={handleGenerate}
-                >
-                  <p>Generate</p>
-                </Button>
-                <Button
-                  asChild
-                  size="sm"
-                  variant={"secondary"}
-                  disabled={!generatedImage}
-                  className="cursor-pointer"
-                  onClick={() =>
-                    generatedImage && handleDownload(generatedImage)
-                  }
-                >
-                  <p>Download</p>
-                </Button>
-
-                <Dialog open={imageListModal} onOpenChange={setImageListModal}>
-                  {/* <DialogTrigger asChild>
-                    <Button variant="outline">Edit Profile</Button>
-                  </DialogTrigger> */}
-                  <DialogContent className="sm:max-w-[425px] max-h-[500px] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Edit profile</DialogTitle>
-                      <DialogDescription>
-                        {imageList.map((imageData, index) => (
-                          <li key={index}>
-                            <img
-                              src={imageData}
-                              alt={`Image ${index + 1}`}
-                              className="w-full"
-                            />
-                          </li>
-                        ))}
-                      </DialogDescription>
-                    </DialogHeader>
-
-                    <DialogFooter>
-                      <Button type="submit" onClick={handleZipDownload}>
-                        Download All
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
             </div>
           </div>
+
+          {/* New Row Layout for Buttons and Dialog */}
+          {isImageFinal && (
+            <div className="flex justify-end gap-2  p-2 mt-2">
+              <Button
+                asChild
+                size="default"
+                variant={"secondary"}
+                className="cursor-pointer"
+                onClick={handleGenerate}
+              >
+                <p>Generate</p>
+              </Button>
+              <Button
+                asChild
+                size="default"
+                variant={"secondary"}
+                disabled={!generatedImage}
+                className="cursor-pointer"
+                onClick={() => generatedImage && handleDownload(generatedImage)}
+              >
+                <p>Download</p>
+              </Button>
+            </div>
+          )}
+
+          <Dialog open={imageListModal} onOpenChange={setImageListModal}>
+            <DialogContent className="sm:max-w-[425px] max-h-[500px] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Edit profile</DialogTitle>
+                <DialogDescription>
+                  {imageList.map((imageData, index) => (
+                    <li key={index}>
+                      <img
+                        src={imageData}
+                        alt={`Image ${index + 1}`}
+                        className="w-full"
+                      />
+                    </li>
+                  ))}
+                </DialogDescription>
+              </DialogHeader>
+
+              <DialogFooter>
+                <Button type="submit" onClick={handleZipDownload}>
+                  Download All
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>
