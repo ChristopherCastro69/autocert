@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import CustomSelect from "./ui/custom-select";
 import ColorPicker from "./ui/color-picker";
+import { Checkbox } from "./ui/checkbox";
 
 interface ToolbarProps {
   setNameList: (data: any[]) => void;
@@ -27,6 +28,7 @@ interface ToolbarProps {
   handlePosX: (value: number) => void;
   handlePosY: (value: number) => void;
   handleFinalImage: (final: boolean) => void;
+  handleCapitalization: (final: boolean) => void;
   name: string;
   fontSize: number;
   selectedFont: string;
@@ -37,6 +39,7 @@ interface ToolbarProps {
   posY: number;
   textColor: string;
   isImageFinal: boolean;
+  isCapitalized: boolean;
 }
 
 const fontOptions = [
@@ -63,6 +66,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
   handlePosX,
   handlePosY,
   handleFinalImage,
+  handleCapitalization,
+  isCapitalized,
   fontSize,
   isBold,
   isItalic,
@@ -100,7 +105,21 @@ const Toolbar: React.FC<ToolbarProps> = ({
           disabled={isImageFinal}
         />
       </div>
-      <div className=" border-gray-300 w-full flex-row space-y-2">
+      <div className="flex items-center space-x-2 mt-2">
+        <label
+          htmlFor="capitalize"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          Capitalize?
+        </label>
+        <Checkbox
+          id="capitalize"
+          checked={isCapitalized}
+          onCheckedChange={handleCapitalization}
+          disabled={isImageFinal}
+        />
+      </div>
+      <div className=" border-gray-300 border-t w-full flex-row space-y-2">
         <p className="mt-2 font-bold">Position</p>
         <div className="space-y-1">
           <p>X-axis</p>
@@ -232,6 +251,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           disabled={isImageFinal}
         />
       </div>
+
       <div className="w-full flex space-y-2 gap-2 flex-col">
         <div className="flex justify-between gap-2 w-full mt-2">
           <Button

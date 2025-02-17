@@ -53,15 +53,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   });
   const [isImageFinal, setIsImageFinal] = useState<boolean>(false);
   const [imageListModal, setImageListModal] = useState<boolean>(false);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [initialMousePos, setInitialMousePos] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
-  const [initialPos, setInitialPos] = useState<{ x: number; y: number }>({
-    x: textProps.posX,
-    y: textProps.posY,
-  });
+  const [isCapitalized, setIsCapitalized] = useState<boolean>(false);
 
   // Memoize the font style to avoid recalculating on every render
   const fontStyle = useMemo(() => {
@@ -121,15 +113,20 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         if (context) {
           context.drawImage(image, 0, 0);
 
+          // Capitalize the name if isCapitalized is true
+          const displayName = isCapitalized
+            ? textProps.name.toUpperCase()
+            : textProps.name;
+
           context.font = fontStyle; // Use the memoized font style
           context.fillStyle = textProps.textColor;
           context.textAlign = "center";
-          context.fillText(textProps.name, textProps.posX, textProps.posY);
+          context.fillText(displayName, textProps.posX, textProps.posY);
 
           if (textProps.isUnderline) {
             context.strokeStyle = textProps.textColor;
             context.lineWidth = 2;
-            const textWidth = context.measureText(textProps.name).width;
+            const textWidth = context.measureText(displayName).width;
             context.beginPath();
             context.moveTo(textProps.posX - textWidth / 2, textProps.posY + 2);
             context.lineTo(textProps.posX + textWidth / 2, textProps.posY + 2);
@@ -148,7 +145,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         }
       };
     }
-  }, [selectedImage, textProps, fontStyle, isImageFinal]);
+  }, [selectedImage, textProps, fontStyle, isImageFinal, isCapitalized]);
 
   const handleZipDownload = () => {
     const zip = new JSZip();
@@ -185,7 +182,12 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     textProps.posY,
     textProps.textColor,
     nameList,
+    isCapitalized,
   ]);
+
+  useEffect(() => {
+    console.log("isCapitalized:", isCapitalized);
+  }, [isCapitalized]);
 
   if (!isOpen) return null;
 
@@ -197,14 +199,19 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   };
 
   const handleNameList = (newNameList: { combined: string }[]) => {
-    setNameList(newNameList);
-    if (newNameList.length > 0) {
-      setTextProps((prev) => ({ ...prev, name: newNameList[0].combined }));
+    const updatedNameList = isCapitalized
+      ? newNameList.map((item) => ({ combined: item.combined.toUpperCase() }))
+      : newNameList;
+
+    setNameList(updatedNameList);
+    if (updatedNameList.length > 0) {
+      setTextProps((prev) => ({ ...prev, name: updatedNameList[0].combined }));
     }
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTextProps((prev) => ({ ...prev, name: e.target.value }));
+    const name = isCapitalized ? e.target.value.toUpperCase() : e.target.value;
+    setTextProps((prev) => ({ ...prev, name }));
   };
 
   const handleFontSizeChange = (value: number) => {
@@ -241,6 +248,10 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
 
   const handleFinalImage = (final: boolean) => {
     setIsImageFinal(final);
+  };
+
+  const handleCapitalization = (final: boolean) => {
+    setIsCapitalized(!isCapitalized);
   };
 
   return (
@@ -292,6 +303,8 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   handlePosY={handlePosY}
                   handleTextColorChange={handleTextColorChange}
                   handleFinalImage={handleFinalImage}
+                  handleCapitalization={handleCapitalization}
+                  isCapitalized={isCapitalized}
                   name={textProps.name}
                   fontSize={textProps.fontSize}
                   selectedFont={textProps.selectedFont}
