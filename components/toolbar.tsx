@@ -8,8 +8,8 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
-import { Bold, Italic, Underline } from "lucide-react";
-import { useState } from "react";
+import { Bold, CheckIcon, Italic, Underline } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import CustomSelect from "./ui/custom-select";
 import ColorPicker from "./ui/color-picker";
@@ -26,7 +26,7 @@ interface ToolbarProps {
   handleTextColorChange: (color: string) => void;
   handlePosX: (value: number) => void;
   handlePosY: (value: number) => void;
-  handleFinalImage: () => void;
+  handleFinalImage: (final: boolean) => void;
   name: string;
   fontSize: number;
   selectedFont: string;
@@ -69,9 +69,22 @@ const Toolbar: React.FC<ToolbarProps> = ({
   isUnderline,
   isImageFinal,
   textColor,
+  posX,
+  posY,
 }) => {
+  const [xValue, setXValue] = useState(posX);
+  const [yValue, setYValue] = useState(posY);
+
+  useEffect(() => {
+    setXValue(posX);
+  }, [posX]);
+
+  useEffect(() => {
+    setYValue(posY);
+  }, [posY]);
+
   return (
-    <div className="flex-row items-center justify-center h-full text-sm space-y-4 ">
+    <div className="flex-row items-center justify-center h-full text-sm space-y-3 ">
       <div className="mb-1">
         <UploadRecipient setDisplayData={setNameList} />
       </div>
@@ -84,37 +97,82 @@ const Toolbar: React.FC<ToolbarProps> = ({
           placeholder="Sample Name"
           className="border rounded p-1 focus:outline-none border-none"
           onChange={handleNameChange}
+          disabled={isImageFinal}
         />
       </div>
       <div className=" border-gray-300 w-full flex-row space-y-2">
-        <p className="mt-2">Position</p>
+        <p className="mt-2 font-bold">Position</p>
         <div className="space-y-1">
           <p>X-axis</p>
-          <Slider
-            min={0}
-            defaultValue={[500]}
-            max={2500}
-            step={1}
-            onValueChange={(value) => handlePosX(value[0])}
-          />
+          <div className="flex items-center space-x-2">
+            <Slider
+              min={0}
+              value={[xValue]}
+              max={2500}
+              step={50}
+              onValueChange={(value) => {
+                if (!isImageFinal) {
+                  setXValue(value[0]);
+                  handlePosX(value[0]);
+                }
+              }}
+            />
+            <input
+              type="number"
+              value={xValue}
+              onChange={(e) => {
+                if (!isImageFinal) {
+                  const value = Math.max(
+                    0,
+                    Math.min(2500, Number(e.target.value))
+                  );
+                  setXValue(value);
+                  handlePosX(value);
+                }
+              }}
+              className="border rounded p-1 w-16"
+              disabled={isImageFinal}
+            />
+          </div>
         </div>
 
         <div className="space-y-1">
           <p>Y-axis</p>
-          <Slider
-            min={0}
-            defaultValue={[500]}
-            max={2000}
-            step={1}
-            onValueChange={(value) => handlePosY(value[0])}
-          />
+          <div className="flex items-center space-x-2">
+            <Slider
+              min={0}
+              value={[yValue]}
+              max={2000}
+              step={1}
+              onValueChange={(value) => {
+                setYValue(value[0]);
+                handlePosY(value[0]);
+              }}
+            />
+            <input
+              type="number"
+              value={yValue}
+              onChange={(e) => {
+                const value = Math.max(
+                  0,
+                  Math.min(2000, Number(e.target.value))
+                );
+                setYValue(value);
+                handlePosY(value);
+              }}
+              className="border rounded p-1 w-16"
+            />
+          </div>
         </div>
       </div>
       <div className="border-t border-gray-300 w-full flex-row space-y-2">
-        <p className="mt-2">Typography</p>
+        <p className="mt-2 font-bold">Typography</p>
         <div className="lg:flex flex-row  items-center space-x-2 ">
           <div className="flex space-x-2">
-            <Select onValueChange={handleFontFamilyChange}>
+            <Select
+              onValueChange={handleFontFamilyChange}
+              disabled={isImageFinal}
+            >
               <SelectTrigger className="w-[100px]">
                 <SelectValue placeholder="Font" />
               </SelectTrigger>
@@ -130,6 +188,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               options={fontSizeOptions}
               value={fontSize}
               onChange={handleFontSizeChange}
+              disabled={isImageFinal}
             />
           </div>
 
@@ -139,6 +198,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               variant="typography"
               className={`${isBold ? "bg-gray-200 text-black" : "bg-white text-black"} hover:bg-gray-200 focus:ring-black`}
               onClick={handleBoldToggle}
+              disabled={isImageFinal}
             >
               <Bold />
             </Button>
@@ -147,6 +207,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               variant={"typography"}
               className={`${isItalic ? "bg-gray-200 text-black" : "bg-white text-black"} hover:bg-gray-200 focus:ring-black`}
               onClick={handleItalicToggle}
+              disabled={isImageFinal}
             >
               <Italic />
             </Button>
@@ -155,6 +216,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               variant={"typography"}
               className={`${isUnderline ? "bg-gray-200 text-black" : "bg-white text-black"} hover:bg-gray-200 focus:ring-black`}
               onClick={handleUnderlineToggle}
+              disabled={isImageFinal}
             >
               <Underline />
             </Button>
@@ -162,17 +224,42 @@ const Toolbar: React.FC<ToolbarProps> = ({
         </div>
       </div>
       <div className="border-t border-gray-300 w-full flex-row space-y-2">
-        <p className="mt-2">Fill</p>
+        <p className="mt-2 font-bold">Fill</p>
 
-        <ColorPicker color={textColor} onChange={handleTextColorChange} />
-        <Button
-          variant={"typography"}
-          size={"full"}
-          className={`${isImageFinal ? "bg-gray-200 text-black" : "bg-white text-grey"} hover:bg-gray-200 focus:ring-black`}
-          onClick={handleFinalImage}
-        >
-          <p className="">Finalize Image</p>
-        </Button>
+        <ColorPicker
+          color={textColor}
+          onChange={handleTextColorChange}
+          disabled={isImageFinal}
+        />
+      </div>
+      <div className="w-full flex space-y-2 gap-2 flex-col">
+        <div className="flex justify-between gap-2 w-full mt-2">
+          <Button
+            variant={"outline"}
+            size={"full"}
+            className={`${isImageFinal ? "bg-gray-200 text-black" : "bg-white text-grey"} hover:bg-gray-200 focus:ring-black`}
+            onClick={() => handleFinalImage(true)}
+            disabled={isImageFinal}
+          >
+            <p className="flex items-center">
+              {isImageFinal ? (
+                <>
+                  <span className="mr-1">Saved</span>
+                  <CheckIcon />
+                </>
+              ) : (
+                "Save"
+              )}
+            </p>
+          </Button>
+          <Button
+            variant={"outline"}
+            size={"full"}
+            onClick={() => handleFinalImage(false)}
+          >
+            <p className="">Edit</p>
+          </Button>
+        </div>
       </div>
     </div>
   );
