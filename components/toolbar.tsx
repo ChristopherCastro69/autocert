@@ -48,6 +48,9 @@ const fontOptions = [
   "Times New Roman",
   "Courier New",
   "Verdana",
+  "Poppins",
+  "Roboto",
+  "Pacifico",
 ];
 const fontSizeOptions = [
   16, 18, 20, 24, 28, 32, 36, 48, 56, 72, 96, 100, 128, 156, 200,

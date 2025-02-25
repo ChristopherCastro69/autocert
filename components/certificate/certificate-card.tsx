@@ -17,6 +17,10 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 
+import "@fontsource/poppins";
+import "@fontsource/roboto";
+import "@fontsource/pacifico";
+
 interface CertificateCardProps {
   isOpen: boolean;
   onClose: () => void;
@@ -57,7 +61,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
 
   // Memoize the font style to avoid recalculating on every render
   const fontStyle = useMemo(() => {
-    return `${textProps.isBold ? "bold" : ""} ${textProps.isItalic ? "italic" : ""} ${textProps.fontSize}px ${textProps.selectedFont}`;
+    return `${textProps.isBold ? "bold" : ""} ${textProps.isItalic ? "italic" : ""} ${textProps.fontSize}px '${textProps.selectedFont}', sans-serif`;
   }, [
     textProps.isBold,
     textProps.isItalic,
@@ -119,6 +123,8 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
             : textProps.name;
 
           context.font = fontStyle; // Use the memoized font style
+          // context.font = `${textProps.isBold ? "bold" : ""} ${textProps.isItalic ? "italic" : ""} ${textProps.fontSize}px 'Pacifico', sans-serif`;
+
           context.fillStyle = textProps.textColor;
           context.textAlign = "center";
           context.fillText(displayName, textProps.posX, textProps.posY);
@@ -158,7 +164,9 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         ab[i] = byteString.charCodeAt(i);
       }
 
-      zip.file(`certificate_${index + 1}.png`, ab, { binary: true });
+      zip.file(`${nameList[index].combined}.png`, ab, {
+        binary: true,
+      });
     });
 
     zip.generateAsync({ type: "blob" }).then((content) => {
