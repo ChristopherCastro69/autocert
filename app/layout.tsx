@@ -48,8 +48,7 @@ export default function RootLayout({
               <nav className="w-full flex justify-center border-b h-16">
                 <div className="w-full max-w-7xl flex justify-between items-center p-3 px-5 text-sm">
                   <div className="flex gap-5 items-center font-semibold"></div>
-                  {/* {!hasEnvVars ? <EnvVarWarning /> : <HeaderAuth />} */}
-                  <LoginButton />
+                  {!hasEnvVars ? <EnvVarWarning /> : <HeaderAuth />}
                 </div>
               </nav>
               <div className="flex flex-col gap-20 max-w-7xl p-5">
