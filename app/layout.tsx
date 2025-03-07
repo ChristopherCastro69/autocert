@@ -6,6 +6,7 @@ import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import Link from "next/link";
 import "./globals.css";
+import LoginButton from "../components/login-logout-button";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -47,7 +48,8 @@ export default function RootLayout({
               <nav className="w-full flex justify-center border-b h-16">
                 <div className="w-full max-w-7xl flex justify-between items-center p-3 px-5 text-sm">
                   <div className="flex gap-5 items-center font-semibold"></div>
-                  {!hasEnvVars ? <EnvVarWarning /> : <HeaderAuth />}
+                  {/* {!hasEnvVars ? <EnvVarWarning /> : <HeaderAuth />} */}
+                  <LoginButton />
                 </div>
               </nav>
               <div className="flex flex-col gap-20 max-w-7xl p-5">

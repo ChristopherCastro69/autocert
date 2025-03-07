@@ -294,7 +294,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         const blob = new Blob([ab], { type: "image/png" });
 
         // Generate a unique ID for the image
-        const uniqueId = `${nameList[index].combined}-${Date.now()}`;
+        // const uniqueId = `${nameList[index].combined}-${Date.now()}`;
 
         // Define the path in Supabase storage with custom folder name
         const filePath = `certificates/${folderName}/${nameList[index].combined}.png`;
