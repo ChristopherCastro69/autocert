@@ -47,7 +47,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [generatedImage, setGeneratedImage] = useState<string | null>();
   const [imageList, setImageList] = useState<string[]>([]);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
-  const [nameList, setNameList] = useState<{ combined: string }[]>([]);
   const [textProps, setTextProps] = useState<TextProperties>({
     name: "John Nommensen Duchac",
     fontSize: 100,
@@ -62,7 +61,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [isImageFinal, setIsImageFinal] = useState<boolean>(false);
   const [imageListModal, setImageListModal] = useState<boolean>(false);
   const [isCapitalized, setIsCapitalized] = useState<boolean>(false);
-  const [batchNumber, setBatchNumber] = useState<number>(1);
   const [isImageUploaded, setIsImageUploaded] = useState<boolean>(false);
   const [folderName, setFolderName] = useState<string>("");
   const [isFolderNameDialogOpen, setIsFolderNameDialogOpen] =
@@ -70,11 +68,27 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [fetchedCertificates, setFetchedCertificates] = useState<string[]>([]);
   const [isViewCertificatesDialogOpen, setIsViewCertificatesDialogOpen] =
     useState<boolean>(false);
+  const [nameLists, setNameLists] = useState<string[]>([]);
+  const [emailList, setEmailList] = useState<string[]>([]);
 
   // Initialize the Supabase client
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  useEffect(() => {
+    console.log("Name Lists in Certificate Card:");
+    nameLists.forEach((name, index) => {
+      console.log(`Name at index ${index}: ${name}`);
+    });
+  }, [nameLists]); // Dependency array includes nameLists
+
+  // useEffect to set textProps.name based on nameLists
+  useEffect(() => {
+    if (nameLists.length > 0) {
+      setTextProps((prev) => ({ ...prev, name: nameLists[0] })); // Set name to the first element
+    }
+  }, [nameLists]); // Dependency array includes nameLists
 
   // Memoize the font style to avoid recalculating on every render
   const fontStyle = useMemo(() => {
@@ -91,9 +105,10 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   }, []);
 
   const handleGenerate = () => {
-    const count = nameList.length;
+    const count = nameLists.length;
 
     if (count === 0) {
+      console.log("Name list is empty");
       return;
     }
 
@@ -105,10 +120,8 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         return;
       }
 
-      setTextProps((prev) => ({ ...prev, name: nameList[index].combined }));
-      console.log(
-        `Name ${index}: "${nameList[index].combined}" where Count = ${index}`
-      );
+      const name = nameLists[index];
+      setTextProps((prev) => ({ ...prev, name }));
 
       generateCertificate();
       setTimeout(() => {
@@ -181,7 +194,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         ab[i] = byteString.charCodeAt(i);
       }
 
-      zip.file(`${nameList[index].combined}.png`, ab, {
+      zip.file(`${nameLists[index]}.png`, ab, {
         binary: true,
       });
     });
@@ -206,13 +219,11 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     textProps.posX,
     textProps.posY,
     textProps.textColor,
-    nameList,
     isCapitalized,
   ]);
 
-  useEffect(() => {
-    console.log("isCapitalized:", isCapitalized);
-  }, [isCapitalized]);
+
+ 
 
   if (!isOpen) return null;
 
@@ -223,15 +234,12 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     a.click();
   };
 
-  const handleNameList = (newNameList: { combined: string }[]) => {
+  const handleNameList = (newNameList: string[]) => {
     const updatedNameList = isCapitalized
-      ? newNameList.map((item) => ({ combined: item.combined.toUpperCase() }))
+      ? newNameList.map((name) => name.toUpperCase())
       : newNameList;
 
-    setNameList(updatedNameList);
-    if (updatedNameList.length > 0) {
-      setTextProps((prev) => ({ ...prev, name: updatedNameList[0].combined }));
-    }
+    setNameLists(updatedNameList);
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -294,10 +302,10 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         const blob = new Blob([ab], { type: "image/png" });
 
         // Generate a unique ID for the image
-        // const uniqueId = `${nameList[index].combined}-${Date.now()}`;
+        // const uniqueId = `${nameList[index].Email}-${Date.now()}`;
 
         // Define the path in Supabase storage with custom folder name
-        const filePath = `certificates/${folderName}/${nameList[index].combined}.png`;
+        const filePath = `certificates/${folderName}/${nameLists[index]}.png`;
 
         // Upload the image to Supabase storage
         const { error } = await supabase.storage
@@ -403,7 +411,11 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
             <div className="col-span-1 border border-gray-300 bg-white rounded-lg shadow-sm p-4">
               <div className="items-center justify-center">
                 <Toolbar
-                  setNameList={handleNameList}
+                  setNameLists={setNameLists} // Pass the setter function
+                  setEmailList={setEmailList} // Pass the setter function
+                  nameLists={nameLists} // Pass the current nameList
+                  emailList={emailList} // Pass the current emailList
+                  // setNameList={handleNameList}
                   handleImageUpload={handleImageUpload}
                   handleNameChange={handleNameChange}
                   handleFontSizeChange={handleFontSizeChange}

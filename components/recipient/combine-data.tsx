@@ -8,15 +8,8 @@ import {
   CardHeader,
   CardFooter,
 } from "../ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
+
+
 import { ScrollArea } from "../ui/scroll-area";
 import {
   Collapsible,
@@ -38,7 +31,7 @@ export default function CombineData({
 }: CombineDataProps) {
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
   const [combinedData, setCombinedData] = useState<any[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); 
   const [selectedName, setSelectedName] = useState<string>("");
   const [selectedEmail, setSelectedEmail] = useState<string>("");
 
@@ -126,46 +119,6 @@ export default function CombineData({
             </Collapsible>
           </div>
 
-          <div className="w-full flex flex-col">
-            <span>Set Name:</span>
-            <Select
-              onValueChange={(value) => {
-                setSelectedName(value);
-              }}
-              value={selectedName}
-            >
-              <SelectTrigger className="border rounded p-1">
-                <SelectValue placeholder="Select a column" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.keys(data[0] || {}).map((column) => (
-                  <SelectItem key={column} value={column}>
-                    {column}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="w-full flex flex-col">
-            <span>Set Email:</span>
-            <Select
-              onValueChange={(value) => {
-                setSelectedEmail(value);
-              }}
-              value={selectedEmail}
-            >
-              <SelectTrigger className="border rounded p-1">
-                <SelectValue placeholder="Select a column" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.keys(data[0] || {}).map((column) => (
-                  <SelectItem key={column} value={column}>
-                    {column}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
       </CardContent>
     </Card>
