@@ -3,10 +3,7 @@ import { Button } from "@/components/ui/button";
 
 import Papa from "papaparse";
 import CombineData from "@/components/recipient/combine-data";
-import { RecipientCard } from "./recipient-card";
-import { json } from "stream/consumers";
 import { ScrollArea } from "../ui/scroll-area";
-import { Card, CardContent, CardDescription, CardTitle } from "../ui/card";
 import {
   Dialog,
   DialogContent,
@@ -14,16 +11,35 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+
+interface UploadRecipientProps {
+  // setDisplayData: (data: any[]) => void;
+  setNameList: (names: string[]) => void;
+  setEmailList: (emails: string[]) => void;
+}
 
 export default function UploadRecipient({
-  setDisplayData,
-}: {
-  setDisplayData: (data: any[]) => void;
-}) {
+  // setDisplayData,
+  setNameList,
+  setEmailList,
+}: UploadRecipientProps) {
   const [jsonData, setJsonData] = useState<any[]>([]);
   const [message, setMessage] = useState<string>("");
   const [isCardOpen, setIsCardOpen] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedName, setSelectedName] = useState<string>("");
+  const [selectedEmail, setSelectedEmail] = useState<string>("");
+  const [nameList, setNameListState] = useState<string[]>([]);
+  const [emailList, setEmailListState] = useState<string[]>([]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -50,8 +66,26 @@ export default function UploadRecipient({
     setJsonData(combinedData);
   };
 
-  const handleSet = (setData: any[]) => {
-    setDisplayData(setData);
+  const handleSet = (setData: { [key: string]: string }[]) => {
+    // Set nameList based on the selectedName from jsonData, ensuring only strings are included
+    const selectedNames: string[] = setData
+      .map((entry) => entry[selectedName])
+      .filter((name): name is string => typeof name === "string"); // Ensure only strings are included
+
+    setNameListState(selectedNames);
+
+    // Set emailList based on the selectedEmail from jsonData, ensuring only strings are included
+    const selectedEmails: string[] = setData
+      .map((entry) => entry[selectedEmail])
+      .filter((email): email is string => typeof email === "string"); // Ensure only strings are included
+
+    setEmailListState(selectedEmails);
+
+    // setDisplayData(setData);
+
+    // Set nameList and emailList
+    setNameList(selectedNames);
+    setEmailList(selectedEmails);
   };
 
   return (
@@ -92,11 +126,60 @@ export default function UploadRecipient({
               </ScrollArea>
             </div>
             <div className=" col-span-1 ">
-              <CombineData
-                data={jsonData}
-                onCombine={handleCombine}
-                onSet={handleSet}
-              />
+              <Card className="h-96 bg-transparent">
+                <CardHeader className="p-2">
+                  <CardTitle className="font-bold text-sm ">
+                    {" "}
+                    Select Column Names to Display
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-2">
+                  <div className="grid w-full items-center gap-2">
+                    <CombineData data={jsonData} onCombine={handleCombine} />
+
+                    <div className="w-full flex flex-col">
+                      <span>Set Name:</span>
+                      <Select
+                        onValueChange={(value) => {
+                          setSelectedName(value);
+                        }}
+                        value={selectedName}
+                      >
+                        <SelectTrigger className="border rounded p-1">
+                          <SelectValue placeholder="Select a column" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.keys(jsonData[0] || {}).map((column) => (
+                            <SelectItem key={column} value={column}>
+                              {column}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="w-full flex flex-col">
+                      <span>Set Email:</span>
+                      <Select
+                        onValueChange={(value) => {
+                          setSelectedEmail(value);
+                        }}
+                        value={selectedEmail}
+                      >
+                        <SelectTrigger className="border rounded p-1">
+                          <SelectValue placeholder="Select a column" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.keys(jsonData[0] || {}).map((column) => (
+                            <SelectItem key={column} value={column}>
+                              {column}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
           <DialogFooter>

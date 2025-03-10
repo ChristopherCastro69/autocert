@@ -16,7 +16,9 @@ import ColorPicker from "./ui/color-picker";
 import { Checkbox } from "./ui/checkbox";
 
 interface ToolbarProps {
-  setNameList: (data: any[]) => void;
+  // setNameList: (data: any[]) => void;
+  setNameLists: (names: string[]) => void; // Ensure this is a function that takes a string array
+  setEmailList: (emails: string[]) => void; // Ensure this is a function that takes a string array
   handleImageUpload: (file: File) => void;
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleFontSizeChange: (size: number) => void;
@@ -30,6 +32,8 @@ interface ToolbarProps {
   handleFinalImage: (final: boolean) => void;
   handleCapitalization: (final: boolean) => void;
   name: string;
+  nameLists: string[];
+  emailList: string[];
   fontSize: number;
   selectedFont: string;
   isBold: boolean;
@@ -57,7 +61,9 @@ const fontSizeOptions = [
 ];
 
 const Toolbar: React.FC<ToolbarProps> = ({
-  setNameList,
+  setNameLists,
+  setEmailList,
+  // setNameList,
   handleImageUpload,
   handleNameChange,
   handleFontSizeChange,
@@ -70,6 +76,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
   handlePosY,
   handleFinalImage,
   handleCapitalization,
+  nameLists,
+  emailList,
   isCapitalized,
   fontSize,
   isBold,
@@ -94,7 +102,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
   return (
     <div className="flex-row items-center justify-center h-full text-sm space-y-3 ">
       <div className="mb-1">
-        <UploadRecipient setDisplayData={setNameList} />
+        <UploadRecipient
+          // setDisplayData={setNameList}
+          setEmailList={setEmailList}
+          setNameList={setNameLists}
+        />
       </div>
       <div className="mb-8">
         <UploadCertificate handleImageUpload={handleImageUpload} />
