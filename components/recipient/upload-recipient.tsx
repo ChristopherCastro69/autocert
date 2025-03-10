@@ -126,11 +126,6 @@ export default function UploadRecipient({
               </ScrollArea>
             </div>
             <div className=" col-span-1 ">
-              {/* <CombineData
-                data={jsonData}
-                onCombine={handleCombine}
-                onSet={handleSet}
-              /> */}
               <Card className="h-96 bg-transparent">
                 <CardHeader className="p-2">
                   <CardTitle className="font-bold text-sm ">
@@ -140,6 +135,8 @@ export default function UploadRecipient({
                 </CardHeader>
                 <CardContent className="p-2">
                   <div className="grid w-full items-center gap-2">
+                    <CombineData data={jsonData} onCombine={handleCombine} />
+
                     <div className="w-full flex flex-col">
                       <span>Set Name:</span>
                       <Select
