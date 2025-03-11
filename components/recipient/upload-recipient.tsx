@@ -19,27 +19,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+interface SupabaseData {
+  id: number; // Assuming each entry has a unique 'id' field
+  name: string;
+  email: string;
+}
 
 interface UploadRecipientProps {
   // setDisplayData: (data: any[]) => void;
   setNameList: (names: string[]) => void;
   setEmailList: (emails: string[]) => void;
+  supabaseList: (supabase: SupabaseData[]) => void; // Updated type here
 }
 
 export default function UploadRecipient({
   // setDisplayData,
   setNameList,
   setEmailList,
+  supabaseList,
 }: UploadRecipientProps) {
   const [jsonData, setJsonData] = useState<any[]>([]);
+  const [originalData, setOriginalData] = useState<any[]>([]);
   const [message, setMessage] = useState<string>("");
   const [isCardOpen, setIsCardOpen] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
   const [selectedName, setSelectedName] = useState<string>("");
   const [selectedEmail, setSelectedEmail] = useState<string>("");
-  const [nameList, setNameListState] = useState<string[]>([]);
-  const [emailList, setEmailListState] = useState<string[]>([]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -48,6 +53,7 @@ export default function UploadRecipient({
         header: true,
         complete: (results) => {
           setJsonData(results.data);
+          setOriginalData(results.data);
           setMessage("CSV file parsed successfully!");
           setIsCardOpen(true);
         },
@@ -67,25 +73,39 @@ export default function UploadRecipient({
   };
 
   const handleSet = (setData: { [key: string]: string }[]) => {
+    if (!selectedName) {
+      setMessage("Please select a name column.");
+      return;
+    }
+
     // Set nameList based on the selectedName from jsonData, ensuring only strings are included
     const selectedNames: string[] = setData
       .map((entry) => entry[selectedName])
-      .filter((name): name is string => typeof name === "string"); // Ensure only strings are included
+      .filter((name): name is string => typeof name === "string");
 
-    setNameListState(selectedNames);
+    setNameList(selectedNames);
 
     // Set emailList based on the selectedEmail from jsonData, ensuring only strings are included
-    const selectedEmails: string[] = setData
-      .map((entry) => entry[selectedEmail])
-      .filter((email): email is string => typeof email === "string"); // Ensure only strings are included
+    const selectedEmails: string[] = selectedEmail
+      ? setData
+          .map((entry) => entry[selectedEmail])
+          .filter((email): email is string => typeof email === "string")
+      : [];
 
-    setEmailListState(selectedEmails);
-
-    // setDisplayData(setData);
-
-    // Set nameList and emailList
-    setNameList(selectedNames);
     setEmailList(selectedEmails);
+
+    // Save to supabaseList with corresponding unique IDs
+    const supabaseData: SupabaseData[] = setData.map((entry, index) => ({
+      id: index, // Assuming each entry has a unique 'id' field
+      name: entry[selectedName],
+      email: entry[selectedEmail],
+    }));
+
+    supabaseList(supabaseData);
+  };
+
+  const resetJsonData = () => {
+    setJsonData(originalData);
   };
 
   return (
@@ -135,7 +155,11 @@ export default function UploadRecipient({
                 </CardHeader>
                 <CardContent className="p-2">
                   <div className="grid w-full items-center gap-2">
-                    <CombineData data={jsonData} onCombine={handleCombine} />
+                    <CombineData
+                      data={jsonData}
+                      onCombine={handleCombine}
+                      resetJsonData={resetJsonData}
+                    />
 
                     <div className="w-full flex flex-col">
                       <span>Set Name:</span>
@@ -169,6 +193,9 @@ export default function UploadRecipient({
                           <SelectValue placeholder="Select a column" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem key="none" value="johndoe@gmail.com">
+                            None
+                          </SelectItem>
                           {Object.keys(jsonData[0] || {}).map((column) => (
                             <SelectItem key={column} value={column}>
                               {column}

@@ -14,9 +14,13 @@ import { Button } from "./ui/button";
 import CustomSelect from "./ui/custom-select";
 import ColorPicker from "./ui/color-picker";
 import { Checkbox } from "./ui/checkbox";
-
+interface SupabaseData {
+  id: number; // Assuming each entry has a unique 'id' field
+  name: string;
+  email: string;
+}
 interface ToolbarProps {
-  // setNameList: (data: any[]) => void;
+  supabaseList: (supabase: SupabaseData[]) => void; // Updated type here
   setNameLists: (names: string[]) => void; // Ensure this is a function that takes a string array
   setEmailList: (emails: string[]) => void; // Ensure this is a function that takes a string array
   handleImageUpload: (file: File) => void;
@@ -61,6 +65,7 @@ const fontSizeOptions = [
 ];
 
 const Toolbar: React.FC<ToolbarProps> = ({
+  supabaseList,
   setNameLists,
   setEmailList,
   // setNameList,
@@ -106,6 +111,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           // setDisplayData={setNameList}
           setEmailList={setEmailList}
           setNameList={setNameLists}
+          supabaseList={supabaseList}
         />
       </div>
       <div className="mb-8">

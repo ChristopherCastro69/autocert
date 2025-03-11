@@ -1,14 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardContent,
-  CardTitle,
-  CardHeader,
-  CardFooter,
-} from "../ui/card";
-
 import { ScrollArea } from "../ui/scroll-area";
 import {
   Collapsible,
@@ -20,12 +11,26 @@ import { ChevronsUpDown } from "lucide-react";
 interface CombineDataProps {
   data: any[];
   onCombine: (combinedData: any[]) => void;
+  resetJsonData: () => void;
 }
 
-export default function CombineData({ data, onCombine }: CombineDataProps) {
+export default function CombineData({
+  data,
+  onCombine,
+  resetJsonData,
+}: CombineDataProps) {
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
   const [combinedData, setCombinedData] = useState<any[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [originalData, setOriginalData] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (data && data.length > 0) {
+      // Check if data is available
+      setOriginalData(data); // Set originalData only if data is available
+
+    }
+  }, [data]);
 
   const handleColumnSelect = (column: string) => {
     setSelectedColumns((prev) =>
@@ -42,6 +47,13 @@ export default function CombineData({ data, onCombine }: CombineDataProps) {
     });
     setCombinedData(newData);
     onCombine(newData);
+    setIsOpen(false);
+  };
+
+  const handleClear = () => {
+    setSelectedColumns([]);
+    setCombinedData([]);
+    resetJsonData();
   };
 
   return (
@@ -81,8 +93,8 @@ export default function CombineData({ data, onCombine }: CombineDataProps) {
                 Combine
               </Button>
 
-              <Button size="full" variant="ghost">
-                Clear
+              <Button onClick={handleClear} size="full" variant="ghost">
+                Reset
               </Button>
             </div>
           </CollapsibleContent>
