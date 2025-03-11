@@ -24,7 +24,11 @@ import "@fontsource/pacifico";
 import { createClient } from "@supabase/supabase-js";
 import { Label } from "@radix-ui/react-label";
 import { Input } from "../ui/input";
-
+interface SupabaseData {
+  id: number; // Assuming each entry has a unique 'id' field
+  name: string;
+  email: string;
+}
 interface CertificateCardProps {
   isOpen: boolean;
   onClose: () => void;
@@ -70,6 +74,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     useState<boolean>(false);
   const [nameLists, setNameLists] = useState<string[]>([]);
   const [emailList, setEmailList] = useState<string[]>([]);
+  const [supabaseList, setSupabaseList] = useState<SupabaseData[]>([]); // Updated type here
 
   // Initialize the Supabase client
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -77,18 +82,14 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
   useEffect(() => {
-    console.log("Name Lists in Certificate Card:");
-    nameLists.forEach((name, index) => {
-      console.log(`Name at index ${index}: ${name}`);
-    });
-  }, [nameLists]); // Dependency array includes nameLists
-
-  // useEffect to set textProps.name based on nameLists
-  useEffect(() => {
-    if (nameLists.length > 0) {
-      setTextProps((prev) => ({ ...prev, name: nameLists[0] })); // Set name to the first element
+    if (supabaseList.length > 0) {
+      setTextProps((prev) => ({
+        ...prev,
+        name: supabaseList[0].name,
+      }));
     }
-  }, [nameLists]); // Dependency array includes nameLists
+    console.log("Supabase List:", supabaseList);
+  }, [supabaseList]);
 
   // Memoize the font style to avoid recalculating on every render
   const fontStyle = useMemo(() => {
@@ -222,9 +223,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     isCapitalized,
   ]);
 
-
- 
-
   if (!isOpen) return null;
 
   const handleDownload = (imageData: string) => {
@@ -232,14 +230,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     a.href = imageData;
     a.download = `${textProps.name}.png`;
     a.click();
-  };
-
-  const handleNameList = (newNameList: string[]) => {
-    const updatedNameList = isCapitalized
-      ? newNameList.map((name) => name.toUpperCase())
-      : newNameList;
-
-    setNameLists(updatedNameList);
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -411,6 +401,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
             <div className="col-span-1 border border-gray-300 bg-white rounded-lg shadow-sm p-4">
               <div className="items-center justify-center">
                 <Toolbar
+                  supabaseList={setSupabaseList}
                   setNameLists={setNameLists} // Pass the setter function
                   setEmailList={setEmailList} // Pass the setter function
                   nameLists={nameLists} // Pass the current nameList
