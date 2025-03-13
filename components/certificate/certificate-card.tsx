@@ -24,7 +24,14 @@ import "@fontsource/pacifico";
 import { createClient } from "@supabase/supabase-js";
 import { Label } from "@radix-ui/react-label";
 import { Input } from "../ui/input";
+import { useUser } from "@/components/context/UserContext";
+import { UserProfile } from "../../dto/UserProfilesDTO";
 
+interface SupabaseData {
+  id: number; // Assuming each entry has a unique 'id' field
+  name: string;
+  email: string;
+}
 interface CertificateCardProps {
   isOpen: boolean;
   onClose: () => void;
@@ -43,11 +50,11 @@ interface TextProperties {
 }
 
 export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
+  const { user } = useUser();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>();
   const [imageList, setImageList] = useState<string[]>([]);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
-  const [nameList, setNameList] = useState<{ combined: string }[]>([]);
   const [textProps, setTextProps] = useState<TextProperties>({
     name: "John Nommensen Duchac",
     fontSize: 100,
@@ -62,7 +69,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [isImageFinal, setIsImageFinal] = useState<boolean>(false);
   const [imageListModal, setImageListModal] = useState<boolean>(false);
   const [isCapitalized, setIsCapitalized] = useState<boolean>(false);
-  const [batchNumber, setBatchNumber] = useState<number>(1);
   const [isImageUploaded, setIsImageUploaded] = useState<boolean>(false);
   const [folderName, setFolderName] = useState<string>("");
   const [isFolderNameDialogOpen, setIsFolderNameDialogOpen] =
@@ -70,11 +76,24 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [fetchedCertificates, setFetchedCertificates] = useState<string[]>([]);
   const [isViewCertificatesDialogOpen, setIsViewCertificatesDialogOpen] =
     useState<boolean>(false);
+  const [nameLists, setNameLists] = useState<string[]>([]);
+  const [emailList, setEmailList] = useState<string[]>([]);
+  const [supabaseList, setSupabaseList] = useState<SupabaseData[]>([]); // Updated type here
 
   // Initialize the Supabase client
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  useEffect(() => {
+    if (supabaseList.length > 0) {
+      setTextProps((prev) => ({
+        ...prev,
+        name: supabaseList[0].name,
+      }));
+    }
+  }, [user, supabaseList]);
+
 
   // Memoize the font style to avoid recalculating on every render
   const fontStyle = useMemo(() => {
@@ -91,7 +110,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   }, []);
 
   const handleGenerate = () => {
-    const count = nameList.length;
+    const count = nameLists.length;
 
     if (count === 0) {
       return;
@@ -105,10 +124,8 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         return;
       }
 
-      setTextProps((prev) => ({ ...prev, name: nameList[index].combined }));
-      console.log(
-        `Name ${index}: "${nameList[index].combined}" where Count = ${index}`
-      );
+      const name = nameLists[index];
+      setTextProps((prev) => ({ ...prev, name }));
 
       generateCertificate();
       setTimeout(() => {
@@ -181,7 +198,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         ab[i] = byteString.charCodeAt(i);
       }
 
-      zip.file(`${nameList[index].combined}.png`, ab, {
+      zip.file(`${nameLists[index]}.png`, ab, {
         binary: true,
       });
     });
@@ -206,13 +223,8 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     textProps.posX,
     textProps.posY,
     textProps.textColor,
-    nameList,
     isCapitalized,
   ]);
-
-  useEffect(() => {
-    console.log("isCapitalized:", isCapitalized);
-  }, [isCapitalized]);
 
   if (!isOpen) return null;
 
@@ -221,17 +233,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     a.href = imageData;
     a.download = `${textProps.name}.png`;
     a.click();
-  };
-
-  const handleNameList = (newNameList: { combined: string }[]) => {
-    const updatedNameList = isCapitalized
-      ? newNameList.map((item) => ({ combined: item.combined.toUpperCase() }))
-      : newNameList;
-
-    setNameList(updatedNameList);
-    if (updatedNameList.length > 0) {
-      setTextProps((prev) => ({ ...prev, name: updatedNameList[0].combined }));
-    }
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -294,10 +295,10 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         const blob = new Blob([ab], { type: "image/png" });
 
         // Generate a unique ID for the image
-        // const uniqueId = `${nameList[index].combined}-${Date.now()}`;
+        // const uniqueId = `${nameList[index].Email}-${Date.now()}`;
 
         // Define the path in Supabase storage with custom folder name
-        const filePath = `certificates/${folderName}/${nameList[index].combined}.png`;
+        const filePath = `certificates/${folderName}/${nameLists[index]}.png`;
 
         // Upload the image to Supabase storage
         const { error } = await supabase.storage
@@ -382,7 +383,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         >
           <XIcon className="w-4 h-4" />
         </button>
-        <div className="lg:h-[585 px] overflow-y-auto w-full p-2 ">
+        <div className="lg:h-[585px] overflow-y-auto w-full p-2 ">
           <div className="grid grid-cols-3 grid-flow-col gap-4">
             <div className="p-2 col-span-2 ">
               {generatedImage ? (
@@ -398,12 +399,24 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   className="w-full"
                 />
               )}
+              {user && (
+                <div className="flex flex-col">
+                  <p>Id: {user.id}</p>
+                  <p>Name: {user.profile?.full_name}</p>
+                  <p>Email: {user.email}</p>
+                  
+                </div>
+              )}
             </div>
 
             <div className="col-span-1 border border-gray-300 bg-white rounded-lg shadow-sm p-4">
               <div className="items-center justify-center">
                 <Toolbar
-                  setNameList={handleNameList}
+                  supabaseList={setSupabaseList}
+                  setNameLists={setNameLists} 
+                  setEmailList={setEmailList} 
+                  nameLists={nameLists} 
+                  emailList={emailList}
                   handleImageUpload={handleImageUpload}
                   handleNameChange={handleNameChange}
                   handleFontSizeChange={handleFontSizeChange}

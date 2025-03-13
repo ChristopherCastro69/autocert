@@ -1,13 +1,17 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { CertificateCard } from "./certificate/certificate-card";
+import { useRouter } from "next/router";
+import { createClient, supabase } from "../utils/supabase/client";
 
 export default function GenerateCertificate() {
   const [isCardOpen, setIsCardOpen] = useState<boolean>(false);
 
+
   function handleClick() {
     setIsCardOpen(true);
   }
+
   return (
     <div>
       <Button
@@ -23,6 +27,7 @@ export default function GenerateCertificate() {
       <CertificateCard
         isOpen={isCardOpen}
         onClose={() => setIsCardOpen(false)}
+  
       />
     </div>
   );
