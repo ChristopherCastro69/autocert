@@ -33,7 +33,9 @@ import {
   ViewCertificatesDialog,
 } from "../ui/dialog-component";
 import { useTextProperties } from "../../hooks/use-text-properties";
-import { useSupabaseCertificates } from "../../hooks/usa-supabase-certificates";
+import { useSupabaseCertificates } from "../../hooks/use-supabase-certificates";
+import { useImageUpload } from "../../hooks/use-image-upload";
+import { useZipDownload } from "../../hooks/use-zip-download";
 
 interface SupabaseData {
   id: number; // Assuming each entry has a unique 'id' field
@@ -47,7 +49,6 @@ interface CertificateCardProps {
 
 export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const { user } = useUser();
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>();
   const [imageList, setImageList] = useState<string[]>([]);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
@@ -63,7 +64,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     handlePosX,
     handlePosY,
   } = useTextProperties("John Nommensen Duchac");
-
+  const { selectedImage, handleImageUpload } = useImageUpload();
   const [isImageFinal, setIsImageFinal] = useState<boolean>(false);
   const [imageListModal, setImageListModal] = useState<boolean>(false);
   const [isCapitalized, setIsCapitalized] = useState<boolean>(false);
@@ -81,7 +82,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
+  const { handleZipDownload } = useZipDownload(imageList, nameLists);
   const {
     isImageUploaded: supabaseCertIsImageUploaded,
     fetchedCertificates: supabaseCertFetchedCertificates,
@@ -107,9 +108,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     textProps.selectedFont,
   ]);
 
-  const handleImageUpload = useCallback((file: File) => {
-    setSelectedImage(file);
-  }, []);
 
   const handleGenerate = () => {
     const count = nameLists.length;
@@ -190,27 +188,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
       };
     }
   }, [selectedImage, textProps, fontStyle, isImageFinal, isCapitalized]);
-
-  const handleZipDownload = () => {
-    const zip = new JSZip();
-
-    imageList.forEach((imageData, index) => {
-      const byteString = atob(imageData.split(",")[1]);
-      const ab = new Uint8Array(byteString.length);
-
-      for (let i = 0; i < byteString.length; i++) {
-        ab[i] = byteString.charCodeAt(i);
-      }
-
-      zip.file(`${nameLists[index]}.png`, ab, {
-        binary: true,
-      });
-    });
-
-    zip.generateAsync({ type: "blob" }).then((content) => {
-      saveAs(content, "certificates.zip");
-    });
-  };
 
   useEffect(() => {
     if (selectedImage) {
