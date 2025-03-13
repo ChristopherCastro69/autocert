@@ -36,6 +36,7 @@ import { useTextProperties } from "../../hooks/use-text-properties";
 import { useSupabaseCertificates } from "../../hooks/use-supabase-certificates";
 import { useImageUpload } from "../../hooks/use-image-upload";
 import { useZipDownload } from "../../hooks/use-zip-download";
+import { useCertificateProcessor } from "../../hooks/use-certificate-processor";
 
 interface SupabaseData {
   id: number; // Assuming each entry has a unique 'id' field
@@ -108,104 +109,19 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     textProps.selectedFont,
   ]);
 
-
-  const handleGenerate = () => {
-    const count = nameLists.length;
-
-    if (count === 0) {
-      return;
-    }
-
-    setIsDownloading(true);
-
-    const generateAndDownload = (index: number) => {
-      if (index >= count) {
-        setImageListModal(true);
-        return;
-      }
-
-      const name = nameLists[index];
-      handleNameChange({
-        target: { value: name },
-      } as React.ChangeEvent<HTMLInputElement>);
-
-      generateCertificate();
-      setTimeout(() => {
-        generateAndDownload(index + 1);
-      }, 2000);
-    };
-
-    generateAndDownload(0);
-  };
-
-  const generateCertificate = useCallback(() => {
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-
-    if (selectedImage) {
-      const image = new Image();
-      image.src = URL.createObjectURL(selectedImage);
-
-      image.onload = () => {
-        canvas.width = image.width;
-        canvas.height = image.height;
-
-        if (context) {
-          context.drawImage(image, 0, 0);
-
-          // Capitalize the name if isCapitalized is true
-          const displayName = isCapitalized
-            ? textProps.name.toUpperCase()
-            : textProps.name;
-
-          context.font = fontStyle; // Use the memoized font style
-          // context.font = `${textProps.isBold ? "bold" : ""} ${textProps.isItalic ? "italic" : ""} ${textProps.fontSize}px 'Pacifico', sans-serif`;
-
-          context.fillStyle = textProps.textColor;
-          context.textAlign = "center";
-          context.fillText(displayName, textProps.posX, textProps.posY);
-
-          if (textProps.isUnderline) {
-            context.strokeStyle = textProps.textColor;
-            context.lineWidth = 2;
-            const textWidth = context.measureText(displayName).width;
-            context.beginPath();
-            context.moveTo(textProps.posX - textWidth / 2, textProps.posY + 2);
-            context.lineTo(textProps.posX + textWidth / 2, textProps.posY + 2);
-            context.stroke();
-          }
-        }
-        const imageData = canvas.toDataURL("image/png");
-        setGeneratedImage(imageData);
-        if (isImageFinal) {
-          setImageList((prevList) => {
-            if (!prevList.includes(imageData)) {
-              return [...prevList, imageData];
-            }
-            return prevList;
-          });
-        }
-      };
-    }
-  }, [selectedImage, textProps, fontStyle, isImageFinal, isCapitalized]);
-
-  useEffect(() => {
-    if (selectedImage) {
-      generateCertificate();
-    }
-  }, [
+  const { processCertificates } = useCertificateProcessor(
     selectedImage,
-    textProps.name,
-    textProps.fontSize,
-    textProps.isBold,
-    textProps.isItalic,
-    textProps.isUnderline,
-    textProps.selectedFont,
-    textProps.posX,
-    textProps.posY,
-    textProps.textColor,
+    textProps,
+    fontStyle,
+    isImageFinal,
     isCapitalized,
-  ]);
+    setGeneratedImage,
+    setImageList,
+    nameLists,
+    handleNameChange,
+    setImageListModal
+  );
+
 
   if (!isOpen) return null;
 
@@ -319,7 +235,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                 size="default"
                 variant={"secondary"}
                 className="cursor-pointer"
-                onClick={handleGenerate}
+                onClick={processCertificates}
               >
                 <p>Generate</p>
               </Button>
