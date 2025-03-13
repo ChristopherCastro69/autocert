@@ -26,6 +26,7 @@ import { Label } from "@radix-ui/react-label";
 import { Input } from "../ui/input";
 import { useUser } from "@/components/context/UserContext";
 import { UserProfile } from "../../dto/UserProfilesDTO";
+import { CertificateDialog, UploadSuccessDialog, FolderNameDialog, ViewCertificatesDialog } from "../ui/dialog-component";
 
 interface SupabaseData {
   id: number; // Assuming each entry has a unique 'id' field
@@ -93,7 +94,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
       }));
     }
   }, [user, supabaseList]);
-
 
   // Memoize the font style to avoid recalculating on every render
   const fontStyle = useMemo(() => {
@@ -404,7 +404,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   <p>Id: {user.id}</p>
                   <p>Name: {user.profile?.full_name}</p>
                   <p>Email: {user.email}</p>
-                  
                 </div>
               )}
             </div>
@@ -413,9 +412,9 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
               <div className="items-center justify-center">
                 <Toolbar
                   supabaseList={setSupabaseList}
-                  setNameLists={setNameLists} 
-                  setEmailList={setEmailList} 
-                  nameLists={nameLists} 
+                  setNameLists={setNameLists}
+                  setEmailList={setEmailList}
+                  nameLists={nameLists}
                   emailList={emailList}
                   handleImageUpload={handleImageUpload}
                   handleNameChange={handleNameChange}
@@ -470,125 +469,34 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
             </div>
           )}
 
-          <Dialog open={imageListModal} onOpenChange={setImageListModal}>
-            <DialogContent className="sm:max-w-[425px] max-h-[500px] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Edit profile</DialogTitle>
-                <DialogDescription>
-                  {imageList.map((imageData, index) => (
-                    <li key={index}>
-                      <img
-                        src={imageData}
-                        alt={`Image ${index + 1}`}
-                        className="w-full"
-                      />
-                    </li>
-                  ))}
-                </DialogDescription>
-              </DialogHeader>
+          <CertificateDialog  
+            imageListModal={imageListModal}
+            setImageListModal={setImageListModal}
+            imageList={imageList}
+            handleZipDownload={handleZipDownload}
+            setIsFolderNameDialogOpen={setIsFolderNameDialogOpen}
+          />
 
-              <DialogFooter>
-                <Button type="submit" onClick={handleZipDownload}>
-                  Download All
-                </Button>
-                <Button
-                  type="submit"
-                  onClick={() => setIsFolderNameDialogOpen(true)}
-                >
-                  Save All
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <FolderNameDialog
+            isFolderNameDialogOpen={isFolderNameDialogOpen}
+            setIsFolderNameDialogOpen={setIsFolderNameDialogOpen}
+            folderName={folderName}
+            setFolderName={setFolderName}
+            handleCertificateUpload={handleCertificateUpload}
+          />
 
-          <Dialog
-            open={isFolderNameDialogOpen}
-            onOpenChange={setIsFolderNameDialogOpen}
-          >
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Name folder</DialogTitle>
-                <DialogDescription>
-                  Add names to your folder here. Click save when you're done.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="folderName" className="text-right">
-                    Folder Name
-                  </Label>
-                  <Input
-                    id="folderName"
-                    value={folderName}
-                    onChange={(e) => setFolderName(e.target.value)}
-                    className="col-span-3"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  onClick={() => {
-                    setIsFolderNameDialogOpen(false);
-                    handleCertificateUpload();
-                  }}
-                >
-                  Save changes
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <UploadSuccessDialog
+            isImageUploaded={isImageUploaded}
+            setIsImageUploaded={setIsImageUploaded}
+            handleCertificateFetch={handleCertificateFetch}
+            handleCertificateDelete={handleCertificateDelete}
+          />
 
-          <Dialog open={isImageUploaded} onOpenChange={setIsImageUploaded}>
-            <DialogContent className="sm:max-w-[425px] max-h-[500px] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Image Uploaded Successfully!</DialogTitle>
-                <DialogDescription>
-                  Congrats! You have successfully uploaded the certificates to
-                  supabase!
-                </DialogDescription>
-              </DialogHeader>
-
-              <DialogFooter>
-                <Button type="submit" onClick={handleCertificateFetch}>
-                  View Certificates
-                </Button>
-                <Button type="submit" onClick={handleCertificateDelete}>
-                  Delete
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog
-            open={isViewCertificatesDialogOpen}
-            onOpenChange={setIsViewCertificatesDialogOpen}
-          >
-            <DialogContent className="sm:max-w-[425px] max-h-[500px] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>View Certificates</DialogTitle>
-                <DialogDescription>
-                  {fetchedCertificates.map((url, index) => (
-                    <li key={index}>
-                      <img
-                        src={url}
-                        alt={`Certificate ${index + 1}`}
-                        className="w-full"
-                      />
-                    </li>
-                  ))}
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  onClick={() => setIsViewCertificatesDialogOpen(false)}
-                >
-                  Close
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <ViewCertificatesDialog
+            isViewCertificatesDialogOpen={isViewCertificatesDialogOpen}
+            setIsViewCertificatesDialogOpen={setIsViewCertificatesDialogOpen}
+            fetchedCertificates={fetchedCertificates}
+          />
         </div>
       </div>
     </div>
