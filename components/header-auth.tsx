@@ -1,43 +1,20 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 import { hasEnvVars } from "@/utils/supabase/check-env-vars";
 import Link from "next/link";
-import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { createClient } from "@/utils/supabase/client";
-import { signout } from "@/lib/auth-actions"; // Assuming signout is similar to signOutAction
+import { signout } from "@/lib/auth-actions"; 
+import { useUser } from "@/components/context/UserContext"; 
 
 export default function AuthButton() {
-  const [user, setUser] = useState<any>(null);
+  const { user, setUser } = useUser(); // Access user data from context
   const router = useRouter();
-  const supabase = createClient();
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    fetchUser();
-  }, []);
-
-  // New useEffect to refresh or re-render when user is available
-  useEffect(() => {
-    if (user) {
-      // This will refresh the page
-      router.refresh();
-    }
-  }, [user]);
 
   if (!hasEnvVars) {
     return (
       <div className="flex gap-4 items-center">
-        <Badge variant={"default"} className="font-normal pointer-events-none">
-          Please update .env.local file with anon key and url
-        </Badge>
         <div className="flex gap-2">
           <Button
             asChild
@@ -64,11 +41,11 @@ export default function AuthButton() {
 
   return user ? (
     <div className="flex items-center gap-4">
-      Hey, {user.email}!
+      Hey, {user.profile?.full_name}!
       <Button
         onClick={() => {
           signout();
-          setUser(null);
+          setUser(null); // Optionally clear user state on signout
         }}
         variant={"outline"}
       >

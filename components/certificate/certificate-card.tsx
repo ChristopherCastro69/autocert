@@ -24,6 +24,9 @@ import "@fontsource/pacifico";
 import { createClient } from "@supabase/supabase-js";
 import { Label } from "@radix-ui/react-label";
 import { Input } from "../ui/input";
+import { useUser } from "@/components/context/UserContext";
+import { UserProfile } from "../../dto/UserProfilesDTO";
+
 interface SupabaseData {
   id: number; // Assuming each entry has a unique 'id' field
   name: string;
@@ -47,6 +50,7 @@ interface TextProperties {
 }
 
 export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
+  const { user } = useUser();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>();
   const [imageList, setImageList] = useState<string[]>([]);
@@ -88,8 +92,8 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         name: supabaseList[0].name,
       }));
     }
-    console.log("Supabase List:", supabaseList);
-  }, [supabaseList]);
+  }, [user, supabaseList]);
+
 
   // Memoize the font style to avoid recalculating on every render
   const fontStyle = useMemo(() => {
@@ -109,7 +113,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     const count = nameLists.length;
 
     if (count === 0) {
-      console.log("Name list is empty");
       return;
     }
 
@@ -380,7 +383,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         >
           <XIcon className="w-4 h-4" />
         </button>
-        <div className="lg:h-[585 px] overflow-y-auto w-full p-2 ">
+        <div className="lg:h-[585px] overflow-y-auto w-full p-2 ">
           <div className="grid grid-cols-3 grid-flow-col gap-4">
             <div className="p-2 col-span-2 ">
               {generatedImage ? (
@@ -396,17 +399,24 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   className="w-full"
                 />
               )}
+              {user && (
+                <div className="flex flex-col">
+                  <p>Id: {user.id}</p>
+                  <p>Name: {user.profile?.full_name}</p>
+                  <p>Email: {user.email}</p>
+                  
+                </div>
+              )}
             </div>
 
             <div className="col-span-1 border border-gray-300 bg-white rounded-lg shadow-sm p-4">
               <div className="items-center justify-center">
                 <Toolbar
                   supabaseList={setSupabaseList}
-                  setNameLists={setNameLists} // Pass the setter function
-                  setEmailList={setEmailList} // Pass the setter function
-                  nameLists={nameLists} // Pass the current nameList
-                  emailList={emailList} // Pass the current emailList
-                  // setNameList={handleNameList}
+                  setNameLists={setNameLists} 
+                  setEmailList={setEmailList} 
+                  nameLists={nameLists} 
+                  emailList={emailList}
                   handleImageUpload={handleImageUpload}
                   handleNameChange={handleNameChange}
                   handleFontSizeChange={handleFontSizeChange}

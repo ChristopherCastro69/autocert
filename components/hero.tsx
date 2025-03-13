@@ -1,7 +1,6 @@
 "use client";
 import Certificate from "./../app/public/images/certificate.jpg";
-import GenerateCertificate from "./generate-certificate";
-import SendEmail from "./send-email";
+
 
 export default function Header() {
   return (
