@@ -26,7 +26,13 @@ import { Label } from "@radix-ui/react-label";
 import { Input } from "../ui/input";
 import { useUser } from "@/components/context/UserContext";
 import { UserProfile } from "../../dto/UserProfilesDTO";
-import { CertificateDialog, UploadSuccessDialog, FolderNameDialog, ViewCertificatesDialog } from "../ui/dialog-component";
+import {
+  CertificateDialog,
+  UploadSuccessDialog,
+  FolderNameDialog,
+  ViewCertificatesDialog,
+} from "../ui/dialog-component";
+import { useTextProperties } from "../../hooks/use-text-properties";
 
 interface SupabaseData {
   id: number; // Assuming each entry has a unique 'id' field
@@ -38,35 +44,25 @@ interface CertificateCardProps {
   onClose: () => void;
 }
 
-interface TextProperties {
-  name: string;
-  fontSize: number;
-  isBold: boolean;
-  isItalic: boolean;
-  isUnderline: boolean;
-  textColor: string;
-  selectedFont: string;
-  posX: number;
-  posY: number;
-}
-
 export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const { user } = useUser();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>();
   const [imageList, setImageList] = useState<string[]>([]);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
-  const [textProps, setTextProps] = useState<TextProperties>({
-    name: "John Nommensen Duchac",
-    fontSize: 100,
-    isBold: false,
-    isItalic: false,
-    isUnderline: false,
-    textColor: "#000000",
-    selectedFont: "Arial",
-    posX: 500,
-    posY: 300,
-  });
+  const {
+    textProps,
+    handleNameChange,
+    handleFontSizeChange,
+    handleBoldToggle,
+    handleItalicToggle,
+    handleUnderlineToggle,
+    handleFontFamilyChange,
+    handleTextColorChange,
+    handlePosX,
+    handlePosY,
+  } = useTextProperties("John Nommensen Duchac");
+
   const [isImageFinal, setIsImageFinal] = useState<boolean>(false);
   const [imageListModal, setImageListModal] = useState<boolean>(false);
   const [isCapitalized, setIsCapitalized] = useState<boolean>(false);
@@ -88,12 +84,11 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
 
   useEffect(() => {
     if (supabaseList.length > 0) {
-      setTextProps((prev) => ({
-        ...prev,
-        name: supabaseList[0].name,
-      }));
+      handleNameChange({
+        target: { value: supabaseList[0].name },
+      } as React.ChangeEvent<HTMLInputElement>);
     }
-  }, [user, supabaseList]);
+  }, [user, supabaseList, handleNameChange]);
 
   // Memoize the font style to avoid recalculating on every render
   const fontStyle = useMemo(() => {
@@ -125,7 +120,9 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
       }
 
       const name = nameLists[index];
-      setTextProps((prev) => ({ ...prev, name }));
+      handleNameChange({
+        target: { value: name },
+      } as React.ChangeEvent<HTMLInputElement>);
 
       generateCertificate();
       setTimeout(() => {
@@ -233,43 +230,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     a.href = imageData;
     a.download = `${textProps.name}.png`;
     a.click();
-  };
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const name = isCapitalized ? e.target.value.toUpperCase() : e.target.value;
-    setTextProps((prev) => ({ ...prev, name }));
-  };
-
-  const handleFontSizeChange = (value: number) => {
-    setTextProps((prev) => ({ ...prev, fontSize: value }));
-  };
-
-  const handleBoldToggle = () => {
-    setTextProps((prev) => ({ ...prev, isBold: !prev.isBold }));
-  };
-
-  const handleItalicToggle = () => {
-    setTextProps((prev) => ({ ...prev, isItalic: !prev.isItalic }));
-  };
-
-  const handleUnderlineToggle = () => {
-    setTextProps((prev) => ({ ...prev, isUnderline: !prev.isUnderline }));
-  };
-
-  const handleFontFamilyChange = (font: string) => {
-    setTextProps((prev) => ({ ...prev, selectedFont: font }));
-  };
-
-  const handleTextColorChange = (color: string) => {
-    setTextProps((prev) => ({ ...prev, textColor: color }));
-  };
-
-  const handlePosX = (value: number) => {
-    setTextProps((prev) => ({ ...prev, posX: value }));
-  };
-
-  const handlePosY = (value: number) => {
-    setTextProps((prev) => ({ ...prev, posY: value }));
   };
 
   const handleFinalImage = (final: boolean) => {
@@ -469,7 +429,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
             </div>
           )}
 
-          <CertificateDialog  
+          <CertificateDialog
             imageListModal={imageListModal}
             setImageListModal={setImageListModal}
             imageList={imageList}
