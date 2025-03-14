@@ -1,31 +1,16 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Toolbar from "../toolbar";
-import GoogleCert from "./../../app/public/images/gdg-cert.png";
 import DefaultCert from "./../../app/public/images/Default.png";
 
 import { Button } from "../ui/button";
 import { XIcon } from "lucide-react";
-import JSZip from "jszip";
-import { saveAs } from "file-saver";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
 
 import "@fontsource/poppins";
 import "@fontsource/roboto";
 import "@fontsource/pacifico";
 
 import { createClient } from "@supabase/supabase-js";
-import { Label } from "@radix-ui/react-label";
-import { Input } from "../ui/input";
 import { useUser } from "@/components/context/UserContext";
-import { UserProfile } from "../../dto/UserProfilesDTO";
 import {
   CertificateDialog,
   UploadSuccessDialog,
@@ -66,6 +51,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     handlePosY,
   } = useTextProperties("John Nommensen Duchac");
   const { selectedImage, handleImageUpload } = useImageUpload();
+
   const [isImageFinal, setIsImageFinal] = useState<boolean>(false);
   const [imageListModal, setImageListModal] = useState<boolean>(false);
   const [isCapitalized, setIsCapitalized] = useState<boolean>(false);
@@ -122,7 +108,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     setImageListModal
   );
 
-
   if (!isOpen) return null;
 
   const handleDownload = (imageData: string) => {
@@ -141,7 +126,20 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   };
 
   const handleCertificateUpload = () => {
-    uploadCertificates(imageList, folderName, nameLists, setIsImageUploaded);
+    if (selectedImage && user && user.id) {
+      uploadCertificates(
+        { id: user.id},
+        imageList,
+        folderName,
+        nameLists,
+        emailList,
+        setIsImageUploaded,
+        selectedImage
+      );
+        console.log(" user is defined: ", user.id);
+    } else {
+      console.error("No image selected for upload.");
+    }
   };
 
   const handleCertificateFetch = () => {
