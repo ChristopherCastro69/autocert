@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { Button } from "../ui/button";
-import { useImageUpload } from "./useImageUpload";
+import { useImageUpload } from "../../hooks/useImageUpload";
 
 interface UploadCertificateProps {
   handleImageUpload: (file: File) => void;
