@@ -6,11 +6,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-
 } from "../ui/dialog";
 import { Label } from "./label";
 import { Input } from "./input";
 import { Button } from "./button";
+import { LoadingSpinner } from "./loading-spinner";
 
 interface CertificateDialogProps {
   imageListModal: boolean;
@@ -18,6 +18,7 @@ interface CertificateDialogProps {
   imageList: string[];
   handleZipDownload: () => void;
   setIsFolderNameDialogOpen: (open: boolean) => void;
+  isUploading: boolean;
 }
 
 export const CertificateDialog: React.FC<CertificateDialogProps> = ({
@@ -26,31 +27,47 @@ export const CertificateDialog: React.FC<CertificateDialogProps> = ({
   imageList,
   handleZipDownload,
   setIsFolderNameDialogOpen,
+  isUploading,
 }) => (
   <Dialog open={imageListModal} onOpenChange={setImageListModal}>
     <DialogContent className="sm:max-w-[425px] max-h-[500px] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Edit profile</DialogTitle>
         <DialogDescription>
-          {imageList.map((imageData, index) => (
-            <li key={index}>
-              <img
-                src={imageData}
-                alt={`Image ${index + 1}`}
-                className="w-full"
-              />
-            </li>
-          ))}
+          <div>
+            {isUploading ? (
+              <div className="flex justify-center items-center">
+                <LoadingSpinner size={48} color="#3498db" speed="0.8s" />
+              </div>
+            ) : (
+              <ul>
+                {imageList.map((imageData, index) => (
+                  <li key={index}>
+                    <img
+                      src={imageData}
+                      alt={`Image ${index + 1}`}
+                      className="w-full"
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </DialogDescription>
       </DialogHeader>
 
       <DialogFooter>
-        <Button type="submit" onClick={handleZipDownload}>
+        <Button
+          type="submit"
+          onClick={handleZipDownload}
+          disabled={isUploading}
+        >
           Download All
         </Button>
         <Button
           type="submit"
           onClick={() => setIsFolderNameDialogOpen(true)}
+          disabled={isUploading}
         >
           Save All
         </Button>
@@ -74,7 +91,10 @@ export const FolderNameDialog: React.FC<FolderNameDialogProps> = ({
   setFolderName,
   handleCertificateUpload,
 }) => (
-  <Dialog open={isFolderNameDialogOpen} onOpenChange={setIsFolderNameDialogOpen}>
+  <Dialog
+    open={isFolderNameDialogOpen}
+    onOpenChange={setIsFolderNameDialogOpen}
+  >
     <DialogContent className="sm:max-w-[425px]">
       <DialogHeader>
         <DialogTitle>Name folder</DialogTitle>
@@ -128,8 +148,7 @@ export const UploadSuccessDialog: React.FC<UploadSuccessDialogProps> = ({
       <DialogHeader>
         <DialogTitle>Image Uploaded Successfully!</DialogTitle>
         <DialogDescription>
-          Congrats! You have successfully uploaded the certificates to
-          supabase!
+          Congrats! You have successfully uploaded the certificates to supabase!
         </DialogDescription>
       </DialogHeader>
 
@@ -149,12 +168,14 @@ interface ViewCertificatesDialogProps {
   isViewCertificatesDialogOpen: boolean;
   setIsViewCertificatesDialogOpen: (open: boolean) => void;
   fetchedCertificates: string[];
+  handleZipDownload: () => void;
 }
 
 export const ViewCertificatesDialog: React.FC<ViewCertificatesDialogProps> = ({
   isViewCertificatesDialogOpen,
   setIsViewCertificatesDialogOpen,
   fetchedCertificates,
+  handleZipDownload,
 }) => (
   <Dialog
     open={isViewCertificatesDialogOpen}
@@ -175,11 +196,39 @@ export const ViewCertificatesDialog: React.FC<ViewCertificatesDialogProps> = ({
           ))}
         </DialogDescription>
       </DialogHeader>
+
       <DialogFooter>
+        <Button type="submit" onClick={handleZipDownload}>
+          Download All
+        </Button>
         <Button
           type="submit"
           onClick={() => setIsViewCertificatesDialogOpen(false)}
         >
+          Close
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+);
+
+interface DataSetDialogProps {
+  isDataSetDialogOpen: boolean;
+  setIsDataSetDialogOpen: (open: boolean) => void;
+}
+export const DataSetDialog: React.FC<DataSetDialogProps> = ({
+  isDataSetDialogOpen,
+  setIsDataSetDialogOpen,
+}) => (
+  <Dialog open={isDataSetDialogOpen} onOpenChange={setIsDataSetDialogOpen}>
+    <DialogContent className="sm:max-w-[425px] max-h-[500px] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>Data Set!</DialogTitle>
+        <DialogDescription></DialogDescription>
+      </DialogHeader>
+
+      <DialogFooter>
+        <Button type="submit" onClick={() => setIsDataSetDialogOpen(false)}>
           Close
         </Button>
       </DialogFooter>

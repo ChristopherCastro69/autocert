@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { CertificateCard } from "./certificate/certificate-card";
-import { useRouter } from "next/router";
-import { createClient, supabase } from "../utils/supabase/client";
+
 
 export default function GenerateCertificate() {
   const [isCardOpen, setIsCardOpen] = useState<boolean>(false);

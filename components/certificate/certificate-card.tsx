@@ -9,7 +9,6 @@ import "@fontsource/poppins";
 import "@fontsource/roboto";
 import "@fontsource/pacifico";
 
-import { createClient } from "@supabase/supabase-js";
 import { useUser } from "@/components/context/UserContext";
 import {
   CertificateDialog,
@@ -22,6 +21,7 @@ import { useSupabaseCertificates } from "../../hooks/use-supabase-certificates";
 import { useImageUpload } from "../../hooks/use-image-upload";
 import { useZipDownload } from "../../hooks/use-zip-download";
 import { useCertificateProcessor } from "../../hooks/use-certificate-processor";
+import { LoadingSpinner } from "../ui/loading-spinner";
 
 interface SupabaseData {
   id: number; // Assuming each entry has a unique 'id' field
@@ -37,7 +37,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const { user } = useUser();
   const [generatedImage, setGeneratedImage] = useState<string | null>();
   const [imageList, setImageList] = useState<string[]>([]);
-  const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const {
     textProps,
     handleNameChange,
@@ -63,12 +62,11 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     useState<boolean>(false);
   const [nameLists, setNameLists] = useState<string[]>([]);
   const [emailList, setEmailList] = useState<string[]>([]);
-  const [supabaseList, setSupabaseList] = useState<SupabaseData[]>([]); // Updated type here
+  const [supabaseList, setSupabaseList] = useState<SupabaseData[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [folderExists, setFolderExists] = useState<boolean>(false);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
-  // Initialize the Supabase client
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
   const { handleZipDownload } = useZipDownload(imageList, nameLists);
   const {
     isImageUploaded: supabaseCertIsImageUploaded,
@@ -85,7 +83,10 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     }
   }, [user, supabaseList, handleNameChange]);
 
-  // Memoize the font style to avoid recalculating on every render
+  useEffect(() => {
+    console.log("Email List:", emailList);
+  }, [emailList]);
+
   const fontStyle = useMemo(() => {
     return `${textProps.isBold ? "bold" : ""} ${textProps.isItalic ? "italic" : ""} ${textProps.fontSize}px '${textProps.selectedFont}', sans-serif`;
   }, [
@@ -105,7 +106,8 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     setImageList,
     nameLists,
     handleNameChange,
-    setImageListModal
+    setImageListModal,
+    setIsLoading
   );
 
   if (!isOpen) return null;
@@ -127,16 +129,20 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
 
   const handleCertificateUpload = () => {
     if (selectedImage && user && user.id) {
+      setIsUploading(true);
       uploadCertificates(
-        { id: user.id},
+        { id: user.id },
         imageList,
         folderName,
         nameLists,
         emailList,
-        setIsImageUploaded,
+        () => {
+          setIsImageUploaded(true);
+          setIsUploading(false);
+        },
         selectedImage
       );
-        console.log(" user is defined: ", user.id);
+      console.log(" user is defined: ", user.id);
     } else {
       console.error("No image selected for upload.");
     }
@@ -157,6 +163,11 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         id="modal-content"
         className="bg-white p-4 rounded shadow-lg lg:max-w-[1000px] w-full relative"
       >
+        {isLoading && (
+          <div className="absolute inset-0 flex justify-center items-center bg-white bg-opacity-75 z-10">
+            <LoadingSpinner size={48} color="#3498db" speed="0.8s" />
+          </div>
+        )}
         <button
           id="modal-close-button"
           onClick={onClose}
@@ -180,13 +191,13 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   className="w-full"
                 />
               )}
-              {user && (
+              {/* {user ? (
                 <div className="flex flex-col">
                   <p>Id: {user.id}</p>
                   <p>Name: {user.profile?.full_name}</p>
                   <p>Email: {user.email}</p>
                 </div>
-              )}
+              ) : null} */}
             </div>
 
             <div className="col-span-1 border border-gray-300 bg-white rounded-lg shadow-sm p-4">
@@ -227,26 +238,37 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
 
           {/* New Row Layout for Buttons and Dialog */}
           {isImageFinal && (
-            <div className="flex justify-end gap-2  p-2 mt-2">
-              <Button
-                asChild
-                size="default"
-                variant={"secondary"}
-                className="cursor-pointer"
-                onClick={processCertificates}
-              >
-                <p>Generate</p>
-              </Button>
-              <Button
-                asChild
-                size="default"
-                variant={"secondary"}
-                disabled={!generatedImage}
-                className="cursor-pointer"
-                onClick={() => generatedImage && handleDownload(generatedImage)}
-              >
-                <p>Download</p>
-              </Button>
+            <div className="flex justify-end gap-2 p-2 mt-2">
+              {isLoading ? (
+                <div className="loader">Loading...</div>
+              ) : (
+                <>
+                  <Button
+                    asChild
+                    size="default"
+                    variant={"secondary"}
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setIsLoading(true);
+                      processCertificates();
+                    }}
+                  >
+                    <p>Generate</p>
+                  </Button>
+                  <Button
+                    asChild
+                    size="default"
+                    variant={"secondary"}
+                    disabled={!generatedImage}
+                    className="cursor-pointer"
+                    onClick={() =>
+                      generatedImage && handleDownload(generatedImage)
+                    }
+                  >
+                    <p>Download</p>
+                  </Button>
+                </>
+              )}
             </div>
           )}
 
@@ -256,6 +278,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
             imageList={imageList}
             handleZipDownload={handleZipDownload}
             setIsFolderNameDialogOpen={setIsFolderNameDialogOpen}
+            isUploading={isUploading}
           />
 
           <FolderNameDialog
@@ -277,6 +300,7 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
             isViewCertificatesDialogOpen={isViewCertificatesDialogOpen}
             setIsViewCertificatesDialogOpen={setIsViewCertificatesDialogOpen}
             fetchedCertificates={supabaseCertFetchedCertificates}
+            handleZipDownload={handleZipDownload}
           />
         </div>
       </div>

@@ -16,7 +16,7 @@ export default function GeneratePage() {
 
         <div className="flex lg:flex-row flex-col gap-4 mt-6">
           <GenerateCertificate />
-          <SendEmail />
+          {/* <SendEmail /> */}
         </div>
       </div>
       <div className="p-4">

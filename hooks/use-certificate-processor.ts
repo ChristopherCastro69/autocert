@@ -11,7 +11,8 @@ export function useCertificateProcessor(
   setImageList: (value: (prevList: string[]) => string[]) => void,
   nameLists: string[],
   handleNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void,
-  setImageListModal: (value: boolean) => void
+  setImageListModal: (value: boolean) => void,
+  setIsLoading: (value: boolean) => void
 ) {
   const generateCertificate = useCallback(() => {
     const canvas = document.createElement("canvas");
@@ -73,11 +74,13 @@ export function useCertificateProcessor(
     const count = nameLists.length;
 
     if (count === 0) {
+      setIsLoading(false);
       return;
     }
 
     const generateAndDownload = (index: number) => {
       if (index >= count) {
+        setIsLoading(false);
         setImageListModal(true);
         return;
       }
@@ -95,7 +98,13 @@ export function useCertificateProcessor(
     };
 
     generateAndDownload(0);
-  }, [nameLists, handleNameChange, generateCertificate, setImageListModal]);
+  }, [
+    nameLists,
+    handleNameChange,
+    generateCertificate,
+    setImageListModal,
+    setIsLoading,
+  ]);
 
   useEffect(() => {
     if (selectedImage) {

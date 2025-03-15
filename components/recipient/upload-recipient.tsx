@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { DataSetDialog } from "../ui/dialog-component";
 interface SupabaseData {
   id: number; // Assuming each entry has a unique 'id' field
   name: string;
@@ -33,7 +34,6 @@ interface UploadRecipientProps {
 }
 
 export default function UploadRecipient({
-  // setDisplayData,
   setNameList,
   setEmailList,
   supabaseList,
@@ -45,6 +45,8 @@ export default function UploadRecipient({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedName, setSelectedName] = useState<string>("");
   const [selectedEmail, setSelectedEmail] = useState<string>("");
+  const [isDataSetDialogOpen, setIsDataSetDialogOpen] =
+    useState<boolean>(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -65,6 +67,13 @@ export default function UploadRecipient({
   };
 
   const triggerFileInput = () => {
+    // Reset state for a clean slate
+    setJsonData([]);
+    setOriginalData([]);
+    setSelectedName("");
+    setSelectedEmail("");
+    setMessage("");
+    setIsCardOpen(false);
     fileInputRef.current?.click();
   };
 
@@ -102,6 +111,9 @@ export default function UploadRecipient({
     }));
 
     supabaseList(supabaseData);
+
+    // Open the DataSetDialog
+    setIsDataSetDialogOpen(true);
   };
 
   const resetJsonData = () => {
@@ -221,6 +233,16 @@ export default function UploadRecipient({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DataSetDialog
+        isDataSetDialogOpen={isDataSetDialogOpen}
+        setIsDataSetDialogOpen={(open) => {
+          setIsDataSetDialogOpen(open);
+          if (!open) {
+            setIsCardOpen(false); 
+          }
+        }}
+      />
     </div>
   );
 }
