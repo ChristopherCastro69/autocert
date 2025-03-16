@@ -1,31 +1,27 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Toolbar from "../toolbar";
-import GoogleCert from "./../../app/public/images/gdg-cert.png";
 import DefaultCert from "./../../app/public/images/Default.png";
 
 import { Button } from "../ui/button";
 import { XIcon } from "lucide-react";
-import JSZip from "jszip";
-import { saveAs } from "file-saver";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
 
 import "@fontsource/poppins";
 import "@fontsource/roboto";
 import "@fontsource/pacifico";
 
-import { createClient } from "@supabase/supabase-js";
-import { Label } from "@radix-ui/react-label";
-import { Input } from "../ui/input";
 import { useUser } from "@/components/context/UserContext";
-import { UserProfile } from "../../dto/UserProfilesDTO";
+import {
+  CertificateDialog,
+  UploadSuccessDialog,
+  FolderNameDialog,
+  ViewCertificatesDialog,
+} from "../ui/dialog-component";
+import { useTextProperties } from "../../hooks/use-text-properties";
+import { useSupabaseCertificates } from "../../hooks/use-supabase-certificates";
+import { useImageUpload } from "../../hooks/use-image-upload";
+import { useZipDownload } from "../../hooks/use-zip-download";
+import { useCertificateProcessor } from "../../hooks/use-certificate-processor";
+import { LoadingSpinner } from "../ui/loading-spinner";
 
 interface SupabaseData {
   id: number; // Assuming each entry has a unique 'id' field
@@ -37,35 +33,24 @@ interface CertificateCardProps {
   onClose: () => void;
 }
 
-interface TextProperties {
-  name: string;
-  fontSize: number;
-  isBold: boolean;
-  isItalic: boolean;
-  isUnderline: boolean;
-  textColor: string;
-  selectedFont: string;
-  posX: number;
-  posY: number;
-}
-
 export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const { user } = useUser();
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>();
   const [imageList, setImageList] = useState<string[]>([]);
-  const [isDownloading, setIsDownloading] = useState<boolean>(false);
-  const [textProps, setTextProps] = useState<TextProperties>({
-    name: "John Nommensen Duchac",
-    fontSize: 100,
-    isBold: false,
-    isItalic: false,
-    isUnderline: false,
-    textColor: "#000000",
-    selectedFont: "Arial",
-    posX: 500,
-    posY: 300,
-  });
+  const {
+    textProps,
+    handleNameChange,
+    handleFontSizeChange,
+    handleBoldToggle,
+    handleItalicToggle,
+    handleUnderlineToggle,
+    handleFontFamilyChange,
+    handleTextColorChange,
+    handlePosX,
+    handlePosY,
+  } = useTextProperties("John Nommensen Duchac");
+  const { selectedImage, handleImageUpload } = useImageUpload();
+
   const [isImageFinal, setIsImageFinal] = useState<boolean>(false);
   const [imageListModal, setImageListModal] = useState<boolean>(false);
   const [isCapitalized, setIsCapitalized] = useState<boolean>(false);
@@ -73,29 +58,35 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
   const [folderName, setFolderName] = useState<string>("");
   const [isFolderNameDialogOpen, setIsFolderNameDialogOpen] =
     useState<boolean>(false);
-  const [fetchedCertificates, setFetchedCertificates] = useState<string[]>([]);
   const [isViewCertificatesDialogOpen, setIsViewCertificatesDialogOpen] =
     useState<boolean>(false);
   const [nameLists, setNameLists] = useState<string[]>([]);
   const [emailList, setEmailList] = useState<string[]>([]);
-  const [supabaseList, setSupabaseList] = useState<SupabaseData[]>([]); // Updated type here
+  const [supabaseList, setSupabaseList] = useState<SupabaseData[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [folderExists, setFolderExists] = useState<boolean>(false);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
-  // Initialize the Supabase client
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  const { handleZipDownload } = useZipDownload(imageList, nameLists);
+  const {
+    isImageUploaded: supabaseCertIsImageUploaded,
+    fetchedCertificates: supabaseCertFetchedCertificates,
+    uploadCertificates,
+    fetchCertificates,
+  } = useSupabaseCertificates();
 
   useEffect(() => {
     if (supabaseList.length > 0) {
-      setTextProps((prev) => ({
-        ...prev,
-        name: supabaseList[0].name,
-      }));
+      handleNameChange({
+        target: { value: supabaseList[0].name },
+      } as React.ChangeEvent<HTMLInputElement>);
     }
-  }, [user, supabaseList]);
+  }, [user, supabaseList, handleNameChange]);
 
+  useEffect(() => {
+    console.log("Email List:", emailList);
+  }, [emailList]);
 
-  // Memoize the font style to avoid recalculating on every render
   const fontStyle = useMemo(() => {
     return `${textProps.isBold ? "bold" : ""} ${textProps.isItalic ? "italic" : ""} ${textProps.fontSize}px '${textProps.selectedFont}', sans-serif`;
   }, [
@@ -105,126 +96,19 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     textProps.selectedFont,
   ]);
 
-  const handleImageUpload = useCallback((file: File) => {
-    setSelectedImage(file);
-  }, []);
-
-  const handleGenerate = () => {
-    const count = nameLists.length;
-
-    if (count === 0) {
-      return;
-    }
-
-    setIsDownloading(true);
-
-    const generateAndDownload = (index: number) => {
-      if (index >= count) {
-        setImageListModal(true);
-        return;
-      }
-
-      const name = nameLists[index];
-      setTextProps((prev) => ({ ...prev, name }));
-
-      generateCertificate();
-      setTimeout(() => {
-        generateAndDownload(index + 1);
-      }, 2000);
-    };
-
-    generateAndDownload(0);
-  };
-
-  const generateCertificate = useCallback(() => {
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-
-    if (selectedImage) {
-      const image = new Image();
-      image.src = URL.createObjectURL(selectedImage);
-
-      image.onload = () => {
-        canvas.width = image.width;
-        canvas.height = image.height;
-
-        if (context) {
-          context.drawImage(image, 0, 0);
-
-          // Capitalize the name if isCapitalized is true
-          const displayName = isCapitalized
-            ? textProps.name.toUpperCase()
-            : textProps.name;
-
-          context.font = fontStyle; // Use the memoized font style
-          // context.font = `${textProps.isBold ? "bold" : ""} ${textProps.isItalic ? "italic" : ""} ${textProps.fontSize}px 'Pacifico', sans-serif`;
-
-          context.fillStyle = textProps.textColor;
-          context.textAlign = "center";
-          context.fillText(displayName, textProps.posX, textProps.posY);
-
-          if (textProps.isUnderline) {
-            context.strokeStyle = textProps.textColor;
-            context.lineWidth = 2;
-            const textWidth = context.measureText(displayName).width;
-            context.beginPath();
-            context.moveTo(textProps.posX - textWidth / 2, textProps.posY + 2);
-            context.lineTo(textProps.posX + textWidth / 2, textProps.posY + 2);
-            context.stroke();
-          }
-        }
-        const imageData = canvas.toDataURL("image/png");
-        setGeneratedImage(imageData);
-        if (isImageFinal) {
-          setImageList((prevList) => {
-            if (!prevList.includes(imageData)) {
-              return [...prevList, imageData];
-            }
-            return prevList;
-          });
-        }
-      };
-    }
-  }, [selectedImage, textProps, fontStyle, isImageFinal, isCapitalized]);
-
-  const handleZipDownload = () => {
-    const zip = new JSZip();
-
-    imageList.forEach((imageData, index) => {
-      const byteString = atob(imageData.split(",")[1]);
-      const ab = new Uint8Array(byteString.length);
-
-      for (let i = 0; i < byteString.length; i++) {
-        ab[i] = byteString.charCodeAt(i);
-      }
-
-      zip.file(`${nameLists[index]}.png`, ab, {
-        binary: true,
-      });
-    });
-
-    zip.generateAsync({ type: "blob" }).then((content) => {
-      saveAs(content, "certificates.zip");
-    });
-  };
-
-  useEffect(() => {
-    if (selectedImage) {
-      generateCertificate();
-    }
-  }, [
+  const { processCertificates } = useCertificateProcessor(
     selectedImage,
-    textProps.name,
-    textProps.fontSize,
-    textProps.isBold,
-    textProps.isItalic,
-    textProps.isUnderline,
-    textProps.selectedFont,
-    textProps.posX,
-    textProps.posY,
-    textProps.textColor,
+    textProps,
+    fontStyle,
+    isImageFinal,
     isCapitalized,
-  ]);
+    setGeneratedImage,
+    setImageList,
+    nameLists,
+    handleNameChange,
+    setImageListModal,
+    setIsLoading
+  );
 
   if (!isOpen) return null;
 
@@ -235,43 +119,6 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     a.click();
   };
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const name = isCapitalized ? e.target.value.toUpperCase() : e.target.value;
-    setTextProps((prev) => ({ ...prev, name }));
-  };
-
-  const handleFontSizeChange = (value: number) => {
-    setTextProps((prev) => ({ ...prev, fontSize: value }));
-  };
-
-  const handleBoldToggle = () => {
-    setTextProps((prev) => ({ ...prev, isBold: !prev.isBold }));
-  };
-
-  const handleItalicToggle = () => {
-    setTextProps((prev) => ({ ...prev, isItalic: !prev.isItalic }));
-  };
-
-  const handleUnderlineToggle = () => {
-    setTextProps((prev) => ({ ...prev, isUnderline: !prev.isUnderline }));
-  };
-
-  const handleFontFamilyChange = (font: string) => {
-    setTextProps((prev) => ({ ...prev, selectedFont: font }));
-  };
-
-  const handleTextColorChange = (color: string) => {
-    setTextProps((prev) => ({ ...prev, textColor: color }));
-  };
-
-  const handlePosX = (value: number) => {
-    setTextProps((prev) => ({ ...prev, posX: value }));
-  };
-
-  const handlePosY = (value: number) => {
-    setTextProps((prev) => ({ ...prev, posY: value }));
-  };
-
   const handleFinalImage = (final: boolean) => {
     setIsImageFinal(final);
   };
@@ -280,89 +127,29 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
     setIsCapitalized(!isCapitalized);
   };
 
-  const handleCertificateUpload = async () => {
-    try {
-      // Iterate over the imageList
-      for (let index = 0; index < imageList.length; index++) {
-        const imageData = imageList[index];
-        const byteString = atob(imageData.split(",")[1]);
-        const ab = new Uint8Array(byteString.length);
-
-        for (let i = 0; i < byteString.length; i++) {
-          ab[i] = byteString.charCodeAt(i);
-        }
-
-        const blob = new Blob([ab], { type: "image/png" });
-
-        // Generate a unique ID for the image
-        // const uniqueId = `${nameList[index].Email}-${Date.now()}`;
-
-        // Define the path in Supabase storage with custom folder name
-        const filePath = `certificates/${folderName}/${nameLists[index]}.png`;
-
-        // Upload the image to Supabase storage
-        const { error } = await supabase.storage
-          .from("autocert")
-          .upload(filePath, blob);
-
-        if (error) {
-          console.error("Error uploading image:", error.message);
-        } else {
-          console.log(`Image uploaded successfully: ${filePath}`);
-        }
-      }
-
-      setIsImageUploaded(true); // Set the state to indicate images have been uploaded
-    } catch (error) {
-      console.error("Error in handleCertificateUpload:", error);
+  const handleCertificateUpload = () => {
+    if (selectedImage && user && user.id) {
+      setIsUploading(true);
+      uploadCertificates(
+        { id: user.id },
+        imageList,
+        folderName,
+        nameLists,
+        emailList,
+        () => {
+          setIsImageUploaded(true);
+          setIsUploading(false);
+        },
+        selectedImage
+      );
+      console.log(" user is defined: ", user.id);
+    } else {
+      console.error("No image selected for upload.");
     }
   };
-  const handleCertificateFetch = async () => {
-    try {
-      const folderPath = `certificates/${folderName}`; // Ensure correct path
-      console.log("Fetching from:", folderPath);
 
-      const { data, error } = await supabase.storage
-        .from("autocert")
-        .list(folderPath, {
-          limit: 100,
-          offset: 0,
-          sortBy: { column: "name", order: "asc" },
-        });
-
-      if (error) {
-        console.error("Error fetching certificates:", error.message);
-        return;
-      }
-
-      console.log("List response:", data); // Log the response
-
-      if (!data || data.length === 0) {
-        console.warn("No certificates found in:", folderPath);
-        return;
-      }
-
-      const certificateUrls = data
-        .filter(
-          (file) =>
-            file.name.endsWith(".png") ||
-            file.name.endsWith(".jpg") ||
-            file.name.endsWith(".jpeg")
-        )
-        .map((file) => {
-          const { data } = supabase.storage
-            .from("autocert")
-            .getPublicUrl(`${folderPath}/${file.name}`);
-
-          return data.publicUrl;
-        });
-
-      console.log("Fetched URLs:", certificateUrls);
-      setFetchedCertificates(certificateUrls);
-      setIsViewCertificatesDialogOpen(true);
-    } catch (error) {
-      console.error("Error in handleCertificateFetch:", error);
-    }
+  const handleCertificateFetch = () => {
+    fetchCertificates(folderName, setIsViewCertificatesDialogOpen);
   };
 
   const handleCertificateDelete = async () => {};
@@ -376,6 +163,11 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
         id="modal-content"
         className="bg-white p-4 rounded shadow-lg lg:max-w-[1000px] w-full relative"
       >
+        {isLoading && (
+          <div className="absolute inset-0 flex justify-center items-center bg-white bg-opacity-75 z-10">
+            <LoadingSpinner size={48} color="#3498db" speed="0.8s" />
+          </div>
+        )}
         <button
           id="modal-close-button"
           onClick={onClose}
@@ -399,23 +191,22 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
                   className="w-full"
                 />
               )}
-              {user && (
+              {/* {user ? (
                 <div className="flex flex-col">
                   <p>Id: {user.id}</p>
                   <p>Name: {user.profile?.full_name}</p>
                   <p>Email: {user.email}</p>
-                  
                 </div>
-              )}
+              ) : null} */}
             </div>
 
             <div className="col-span-1 border border-gray-300 bg-white rounded-lg shadow-sm p-4">
               <div className="items-center justify-center">
                 <Toolbar
                   supabaseList={setSupabaseList}
-                  setNameLists={setNameLists} 
-                  setEmailList={setEmailList} 
-                  nameLists={nameLists} 
+                  setNameLists={setNameLists}
+                  setEmailList={setEmailList}
+                  nameLists={nameLists}
                   emailList={emailList}
                   handleImageUpload={handleImageUpload}
                   handleNameChange={handleNameChange}
@@ -447,148 +238,70 @@ export function CertificateCard({ isOpen, onClose }: CertificateCardProps) {
 
           {/* New Row Layout for Buttons and Dialog */}
           {isImageFinal && (
-            <div className="flex justify-end gap-2  p-2 mt-2">
-              <Button
-                asChild
-                size="default"
-                variant={"secondary"}
-                className="cursor-pointer"
-                onClick={handleGenerate}
-              >
-                <p>Generate</p>
-              </Button>
-              <Button
-                asChild
-                size="default"
-                variant={"secondary"}
-                disabled={!generatedImage}
-                className="cursor-pointer"
-                onClick={() => generatedImage && handleDownload(generatedImage)}
-              >
-                <p>Download</p>
-              </Button>
+            <div className="flex justify-end gap-2 p-2 mt-2">
+              {isLoading ? (
+                <div className="loader">Loading...</div>
+              ) : (
+                <>
+                  <Button
+                    asChild
+                    size="default"
+                    variant={"secondary"}
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setIsLoading(true);
+                      processCertificates();
+                    }}
+                  >
+                    <p>Generate</p>
+                  </Button>
+                  <Button
+                    asChild
+                    size="default"
+                    variant={"secondary"}
+                    disabled={!generatedImage}
+                    className="cursor-pointer"
+                    onClick={() =>
+                      generatedImage && handleDownload(generatedImage)
+                    }
+                  >
+                    <p>Download</p>
+                  </Button>
+                </>
+              )}
             </div>
           )}
 
-          <Dialog open={imageListModal} onOpenChange={setImageListModal}>
-            <DialogContent className="sm:max-w-[425px] max-h-[500px] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Edit profile</DialogTitle>
-                <DialogDescription>
-                  {imageList.map((imageData, index) => (
-                    <li key={index}>
-                      <img
-                        src={imageData}
-                        alt={`Image ${index + 1}`}
-                        className="w-full"
-                      />
-                    </li>
-                  ))}
-                </DialogDescription>
-              </DialogHeader>
+          <CertificateDialog
+            imageListModal={imageListModal}
+            setImageListModal={setImageListModal}
+            imageList={imageList}
+            handleZipDownload={handleZipDownload}
+            setIsFolderNameDialogOpen={setIsFolderNameDialogOpen}
+            isUploading={isUploading}
+          />
 
-              <DialogFooter>
-                <Button type="submit" onClick={handleZipDownload}>
-                  Download All
-                </Button>
-                <Button
-                  type="submit"
-                  onClick={() => setIsFolderNameDialogOpen(true)}
-                >
-                  Save All
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <FolderNameDialog
+            isFolderNameDialogOpen={isFolderNameDialogOpen}
+            setIsFolderNameDialogOpen={setIsFolderNameDialogOpen}
+            folderName={folderName}
+            setFolderName={setFolderName}
+            handleCertificateUpload={handleCertificateUpload}
+          />
 
-          <Dialog
-            open={isFolderNameDialogOpen}
-            onOpenChange={setIsFolderNameDialogOpen}
-          >
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Name folder</DialogTitle>
-                <DialogDescription>
-                  Add names to your folder here. Click save when you're done.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="folderName" className="text-right">
-                    Folder Name
-                  </Label>
-                  <Input
-                    id="folderName"
-                    value={folderName}
-                    onChange={(e) => setFolderName(e.target.value)}
-                    className="col-span-3"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  onClick={() => {
-                    setIsFolderNameDialogOpen(false);
-                    handleCertificateUpload();
-                  }}
-                >
-                  Save changes
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <UploadSuccessDialog
+            isImageUploaded={isImageUploaded}
+            setIsImageUploaded={setIsImageUploaded}
+            handleCertificateFetch={handleCertificateFetch}
+            handleCertificateDelete={handleCertificateDelete}
+          />
 
-          <Dialog open={isImageUploaded} onOpenChange={setIsImageUploaded}>
-            <DialogContent className="sm:max-w-[425px] max-h-[500px] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Image Uploaded Successfully!</DialogTitle>
-                <DialogDescription>
-                  Congrats! You have successfully uploaded the certificates to
-                  supabase!
-                </DialogDescription>
-              </DialogHeader>
-
-              <DialogFooter>
-                <Button type="submit" onClick={handleCertificateFetch}>
-                  View Certificates
-                </Button>
-                <Button type="submit" onClick={handleCertificateDelete}>
-                  Delete
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog
-            open={isViewCertificatesDialogOpen}
-            onOpenChange={setIsViewCertificatesDialogOpen}
-          >
-            <DialogContent className="sm:max-w-[425px] max-h-[500px] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>View Certificates</DialogTitle>
-                <DialogDescription>
-                  {fetchedCertificates.map((url, index) => (
-                    <li key={index}>
-                      <img
-                        src={url}
-                        alt={`Certificate ${index + 1}`}
-                        className="w-full"
-                      />
-                    </li>
-                  ))}
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  onClick={() => setIsViewCertificatesDialogOpen(false)}
-                >
-                  Close
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <ViewCertificatesDialog
+            isViewCertificatesDialogOpen={isViewCertificatesDialogOpen}
+            setIsViewCertificatesDialogOpen={setIsViewCertificatesDialogOpen}
+            fetchedCertificates={supabaseCertFetchedCertificates}
+            handleZipDownload={handleZipDownload}
+          />
         </div>
       </div>
     </div>
