@@ -18,7 +18,7 @@ export default function Header() {
           <div className="flex lg:flex-row flex-col gap-4 mt-6">
             <Link href="/sign-in">
               <Button size={"lg"} variant={"default"}>
-                Get Started
+                Get Started 
               </Button>
             </Link>
           </div>
