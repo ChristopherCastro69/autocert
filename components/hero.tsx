@@ -1,5 +1,6 @@
 "use client";
 import Certificate from "./../app/public/images/certificate.jpg";
+import GenerateCertificate from "./generate-certificate";
 import { Button } from "./ui/button";
 import Link from "next/link";
 
@@ -16,11 +17,12 @@ export default function Header() {
           </p>
 
           <div className="flex lg:flex-row flex-col gap-4 mt-6">
-            <Link href="/sign-in">
+            {/* <Link href="/sign-in">
               <Button size={"lg"} variant={"default"}>
                 Get Started 
               </Button>
-            </Link>
+            </Link> */}
+            <GenerateCertificate />
           </div>
         </div>
       </div>
