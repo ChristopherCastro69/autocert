@@ -32,15 +32,15 @@ export const CertificateDialog: React.FC<CertificateDialogProps> = ({
   <Dialog open={imageListModal} onOpenChange={setImageListModal}>
     <DialogContent className="sm:max-w-[425px] max-h-[500px] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>Edit profile</DialogTitle>
+        <DialogTitle>View Certificates</DialogTitle>
         <DialogDescription>
-          <div>
+          <>
             {isUploading ? (
               <div className="flex justify-center items-center">
                 <LoadingSpinner size={48} color="#3498db" speed="0.8s" />
               </div>
             ) : (
-              <ul>
+              <>
                 {imageList.map((imageData, index) => (
                   <li key={index}>
                     <img
@@ -50,9 +50,9 @@ export const CertificateDialog: React.FC<CertificateDialogProps> = ({
                     />
                   </li>
                 ))}
-              </ul>
+              </>
             )}
-          </div>
+          </>
         </DialogDescription>
       </DialogHeader>
 
@@ -64,13 +64,13 @@ export const CertificateDialog: React.FC<CertificateDialogProps> = ({
         >
           Download All
         </Button>
-        <Button
+        {/* <Button
           type="submit"
           onClick={() => setIsFolderNameDialogOpen(true)}
           disabled={isUploading}
         >
           Save All
-        </Button>
+        </Button> */}
       </DialogFooter>
     </DialogContent>
   </Dialog>
@@ -185,15 +185,19 @@ export const ViewCertificatesDialog: React.FC<ViewCertificatesDialogProps> = ({
       <DialogHeader>
         <DialogTitle>View Certificates</DialogTitle>
         <DialogDescription>
-          {fetchedCertificates.map((url, index) => (
-            <li key={index}>
-              <img
-                src={url}
-                alt={`Certificate ${index + 1}`}
-                className="w-full"
-              />
-            </li>
-          ))}
+          <div>
+            <ul>
+              {fetchedCertificates.map((url, index) => (
+                <li key={index}>
+                  <img
+                    src={url}
+                    alt={`Certificate ${index + 1}`}
+                    className="w-full"
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
         </DialogDescription>
       </DialogHeader>
 

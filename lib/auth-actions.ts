@@ -76,6 +76,9 @@ export async function signInWithGoogle() {
     },
   });
 
+  // Logging the response from Supabase
+  console.log("Supabase signInWithGoogle response:", { data, error });
+
   if (error) {
     console.error("Error signing in with Google:", error);
     redirect("/error");
