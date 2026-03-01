@@ -7,8 +7,14 @@ import React, {
   ReactNode,
   useEffect,
 } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { UserProfile } from "../../dto/UserProfilesDTO"; // Adjust the import path as necessary
+import { createClient } from "@/lib/supabase/client";
+interface UserProfile {
+  id: string;
+  profile: Record<string, unknown>;
+  full_name?: string;
+  email?: string;
+  avatar_url?: string;
+}
 
 interface UserContextType {
   user: UserProfile | null;
