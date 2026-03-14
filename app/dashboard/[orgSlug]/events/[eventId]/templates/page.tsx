@@ -45,7 +45,7 @@ export default function TemplatesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Templates</h1>
+        <h1 className="text-lg font-semibold">Templates</h1>
         <Button onClick={() => setUploadOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Upload Template

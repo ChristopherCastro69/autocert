@@ -142,3 +142,8 @@ CRON_SECRET=
 - **Supabase clients**: Browser client (`lib/supabase/client.ts`) for client components, Server client (`lib/supabase/server.ts`) for server components/API routes. Never mix them.
 - **Max template size**: 10 MB
 - **Max recipients per upload**: 5,000
+
+
+## Important:
+- Always run or refresh the next js build when you make changes as to prevent stale build. 
+- Focus your attention in understanding the prompt. Make sure you are 95% sure with your understanding. Otherwise ask.

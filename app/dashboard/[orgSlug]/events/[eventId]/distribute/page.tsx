@@ -126,8 +126,7 @@ export default function DistributePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Distribute Certificates</h1>
-          <p className="text-muted-foreground">{event.name}</p>
+          <h1 className="text-lg font-semibold">Distribute Certificates</h1>
         </div>
         <Button
           variant="outline"

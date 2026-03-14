@@ -114,8 +114,8 @@ export function CertificateEditor({
         )}
       </div>
 
-      <div className="space-y-4">
-        <Card>
+      <Card className="flex flex-col lg:max-h-[calc(100vh-14rem)]">
+        <div className="flex-1 overflow-y-auto">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Text Style</CardTitle>
           </CardHeader>
@@ -132,9 +132,9 @@ export function CertificateEditor({
               setCapitalize={setCapitalize}
             />
           </CardContent>
-        </Card>
 
-        <Card>
+          <div className="border-t mx-6" />
+
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Position</CardTitle>
           </CardHeader>
@@ -147,17 +147,19 @@ export function CertificateEditor({
               setBoundingBoxHeightPercent={setBoundingBoxHeightPercent}
             />
           </CardContent>
-        </Card>
+        </div>
 
-        <Button
-          className="w-full"
-          onClick={handleSaveConfig}
-          disabled={saving}
-        >
-          <Save className="mr-2 h-4 w-4" />
-          {saving ? "Saving..." : "Save Config"}
-        </Button>
-      </div>
+        <div className="border-t p-4 shrink-0">
+          <Button
+            className="w-full"
+            onClick={handleSaveConfig}
+            disabled={saving}
+          >
+            <Save className="mr-2 h-4 w-4" />
+            {saving ? "Saving..." : "Save Config"}
+          </Button>
+        </div>
+      </Card>
     </div>
   );
 }
