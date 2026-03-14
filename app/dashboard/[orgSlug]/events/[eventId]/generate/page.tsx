@@ -9,14 +9,15 @@ import * as recipientRepo from "@/repositories/recipient.repository";
 import { CertificateEditor } from "@/components/certificate/certificate-editor";
 import { BatchProgress } from "@/components/certificate/batch-progress";
 import { useBatchGeneration } from "@/hooks/use-batch-generation";
+import { useZipDownload } from "@/hooks/use-zip-download";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -25,7 +26,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Loader2, Play, FileImage, Users, CheckCircle2 } from "lucide-react";
+import {
+  Loader2,
+  Play,
+  FileImage,
+  Users,
+  CheckCircle2,
+  Download,
+  Eye,
+  ExternalLink,
+} from "lucide-react";
 
 export default function GeneratePage() {
   const params = useParams<{ orgSlug: string; eventId: string }>();
@@ -35,9 +45,11 @@ export default function GeneratePage() {
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [loading, setLoading] = useState(true);
+  const [resultsOpen, setResultsOpen] = useState(false);
 
   const { progress, isGenerating, results, error, generate, cancel } =
     useBatchGeneration();
+  const { handleZipDownload, isDownloading } = useZipDownload();
 
   useEffect(() => {
     const load = async () => {
@@ -162,40 +174,90 @@ export default function GeneratePage() {
       )}
 
       {results.length > 0 && !isGenerating && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
-              Generation Complete
-            </CardTitle>
-            <CardDescription>
-              {results.length} certificate{results.length !== 1 ? "s" : ""}{" "}
-              generated successfully
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="max-h-60 overflow-y-auto">
-              <ul className="space-y-1 text-sm">
-                {results.map((r) => (
-                  <li
-                    key={r.recipientId}
-                    className="flex items-center justify-between py-1"
-                  >
-                    <span>{r.recipientName}</span>
-                    <a
-                      href={r.imageUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary hover:underline"
-                    >
-                      View
-                    </a>
-                  </li>
-                ))}
-              </ul>
+        <>
+          <div className="flex items-center gap-4 rounded-lg border bg-card px-4 py-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <span>
+                {results.length} certificate{results.length !== 1 ? "s" : ""}{" "}
+                generated
+              </span>
             </div>
-          </CardContent>
-        </Card>
+            <div className="ml-auto flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setResultsOpen(true)}
+              >
+                <Eye className="mr-1.5 h-3.5 w-3.5" />
+                View Results
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isDownloading}
+                onClick={() =>
+                  handleZipDownload(
+                    results.map((r) => ({
+                      name: r.recipientName,
+                      url: r.imageUrl,
+                    }))
+                  )
+                }
+              >
+                {isDownloading ? (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                Download ZIP
+              </Button>
+            </div>
+          </div>
+
+          <Dialog open={resultsOpen} onOpenChange={setResultsOpen}>
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
+              <DialogHeader>
+                <DialogTitle>
+                  Generated Certificates ({results.length})
+                </DialogTitle>
+              </DialogHeader>
+              <div className="overflow-y-auto flex-1 -mx-6 px-6 pb-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {results.map((r) => (
+                    <div
+                      key={r.recipientId}
+                      className="group rounded-lg border bg-card overflow-hidden"
+                    >
+                      <div className="relative aspect-[1.414] bg-muted">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={r.imageUrl}
+                          alt={r.recipientName}
+                          className="absolute inset-0 h-full w-full object-contain"
+                          loading="lazy"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between px-3 py-2">
+                        <span className="text-xs font-medium truncate">
+                          {r.recipientName}
+                        </span>
+                        <a
+                          href={r.imageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </>
       )}
 
       {selectedTemplate && (
