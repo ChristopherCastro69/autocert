@@ -38,7 +38,7 @@ export async function create(
 ): Promise<GeneratedCertificate> {
   const { data, error } = await supabase
     .from("generated_certificates")
-    .insert(input)
+    .upsert(input, { onConflict: "recipient_id,template_id" })
     .select()
     .single();
 
@@ -52,7 +52,7 @@ export async function createMany(
 ): Promise<GeneratedCertificate[]> {
   const { data, error } = await supabase
     .from("generated_certificates")
-    .insert(inputs)
+    .upsert(inputs, { onConflict: "recipient_id,template_id" })
     .select();
 
   if (error) throw error;

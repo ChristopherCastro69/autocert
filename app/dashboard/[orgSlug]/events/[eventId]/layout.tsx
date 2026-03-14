@@ -103,56 +103,80 @@ export default function EventDetailLayout({
   const nextStep = activeIndex < steps.length - 1 ? steps[activeIndex + 1] : null;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-2.5rem)] -m-6">
-      {/* Top bar */}
+    <div className="flex flex-col h-screen -m-6">
+      {/* Top bar: back + name */}
       <div className="shrink-0 border-b">
-        <div className="px-5 flex items-end h-12 gap-5">
+        <div className="px-5 flex items-center h-11 gap-3">
           <Link
             href={`/dashboard/${orgSlug}/events`}
-            className="p-1.5 mb-2.5 rounded-md hover:bg-accent transition-colors shrink-0"
+            className="p-1.5 rounded-md hover:bg-accent transition-colors shrink-0"
           >
             <ArrowLeft className="h-4 w-4 text-muted-foreground" />
           </Link>
-          <span className="mb-2.5 text-sm font-semibold truncate">
+          <span className="text-sm font-semibold truncate">
             {event?.name}
           </span>
+        </div>
+      </div>
 
-          {/* Step tabs — bottom-aligned with underline */}
-          <nav className="flex items-end gap-1 ml-2">
-            {steps.map((step, index) => {
-              const status = getStepStatus(step.key, stats);
-              const count = getStepCount(step.key, stats);
-              const isActive = index === activeIndex;
+      {/* Stepper bar */}
+      <div className="shrink-0 border-b py-3">
+        <div className="flex items-center justify-center max-w-md mx-auto px-6">
+          {steps.map((step, index) => {
+            const status = getStepStatus(step.key, stats);
+            const count = getStepCount(step.key, stats);
+            const isActive = index === activeIndex;
 
-              return (
+            return (
+              <div key={step.key} className="flex items-center flex-1 last:flex-none">
                 <Link
-                  key={step.key}
                   href={`${basePath}/${step.key}`}
-                  className={cn(
-                    "relative px-3 pb-2.5 text-[13px] transition-colors",
-                    isActive
-                      ? "text-foreground font-medium"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
+                  className="flex flex-col items-center group"
                 >
-                  <span className="flex items-center gap-1.5">
-                    {status === "complete" && !isActive && (
-                      <Check className="h-3 w-3" strokeWidth={2.5} />
+                  <div
+                    className={cn(
+                      "h-7 w-7 rounded-full flex items-center justify-center text-[11px] font-semibold transition-all",
+                      isActive &&
+                        "bg-primary text-primary-foreground ring-[3px] ring-primary/20",
+                      status === "complete" &&
+                        !isActive &&
+                        "bg-primary text-primary-foreground",
+                      status === "ready" &&
+                        !isActive &&
+                        "border-2 border-border text-muted-foreground group-hover:border-primary/50",
+                      status === "locked" &&
+                        !isActive &&
+                        "border-2 border-border text-muted-foreground/50"
                     )}
+                  >
+                    {status === "complete" && !isActive ? (
+                      <Check className="h-3 w-3" strokeWidth={3} />
+                    ) : (
+                      index + 1
+                    )}
+                  </div>
+                  <span
+                    className={cn(
+                      "mt-1 text-[11px] leading-none whitespace-nowrap",
+                      isActive
+                        ? "text-foreground font-semibold"
+                        : "text-muted-foreground font-medium"
+                    )}
+                  >
                     {step.label}
-                    {count !== null && (
-                      <span className="text-[11px] text-muted-foreground">
-                        {count}
-                      </span>
-                    )}
                   </span>
-                  {isActive && (
-                    <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-foreground rounded-full" />
+                  {count !== null && (
+                    <span className="text-[10px] text-muted-foreground leading-none mt-0.5">
+                      {count}
+                    </span>
                   )}
                 </Link>
-              );
-            })}
-          </nav>
+                {index < steps.length - 1 && (
+                  <div className="flex-1 mx-2 h-px border-t-[1.5px] border-dashed border-border self-start mt-3.5" />
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
