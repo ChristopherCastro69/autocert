@@ -1,84 +1,95 @@
-// hooks/use-text-properties.ts
-import { useState, useCallback, ChangeEvent } from "react";
+"use client";
 
-interface TextProperties {
-  name: string;
-  fontSize: number;
-  isBold: boolean;
-  isItalic: boolean;
-  isUnderline: boolean;
-  textColor: string;
-  selectedFont: string;
-  posX: number;
-  posY: number;
-}
+import { useState, useCallback } from "react";
+import { TemplateTextConfig } from "@/types";
+import { DEFAULT_TEXT_CONFIG } from "@/lib/constants";
 
-export function useTextProperties(initialName: string) {
-  const [textProps, setTextProps] = useState<TextProperties>({
-    name: initialName,
-    fontSize: 100,
-    isBold: false,
-    isItalic: false,
-    isUnderline: false,
-    textColor: "#000000",
-    selectedFont: "Arial",
-    posX: 500,
-    posY: 300,
+export function useTextProperties(initial?: Partial<TemplateTextConfig>) {
+  const [config, setConfig] = useState<TemplateTextConfig>({
+    ...DEFAULT_TEXT_CONFIG,
+    ...initial,
   });
 
-  const handleNameChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    const name = e.target.value;
-    setTextProps((prev: TextProperties) => ({ ...prev, name }));
+  const setFontFamily = useCallback((fontFamily: string) => {
+    setConfig((prev) => ({ ...prev, fontFamily }));
   }, []);
 
-  const handleFontSizeChange = useCallback((fontSize: number) => {
-    setTextProps((prev: TextProperties) => ({ ...prev, fontSize }));
+  const setMaxFontSizePercent = useCallback((maxFontSizePercent: number) => {
+    setConfig((prev) => ({ ...prev, maxFontSizePercent }));
   }, []);
 
-  const handleBoldToggle = useCallback(() => {
-    setTextProps((prev: TextProperties) => ({ ...prev, isBold: !prev.isBold }));
+  const setFontWeight = useCallback(
+    (fontWeight: TemplateTextConfig["fontWeight"]) => {
+      setConfig((prev) => ({ ...prev, fontWeight }));
+    },
+    []
+  );
+
+  const setFontStyle = useCallback(
+    (fontStyle: TemplateTextConfig["fontStyle"]) => {
+      setConfig((prev) => ({ ...prev, fontStyle }));
+    },
+    []
+  );
+
+  const setTextDecoration = useCallback(
+    (textDecoration: TemplateTextConfig["textDecoration"]) => {
+      setConfig((prev) => ({ ...prev, textDecoration }));
+    },
+    []
+  );
+
+  const setTextColor = useCallback((textColor: string) => {
+    setConfig((prev) => ({ ...prev, textColor }));
   }, []);
 
-  const handleItalicToggle = useCallback(() => {
-    setTextProps((prev: TextProperties) => ({
-      ...prev,
-      isItalic: !prev.isItalic,
-    }));
+  const setTextAlign = useCallback(
+    (textAlign: TemplateTextConfig["textAlign"]) => {
+      setConfig((prev) => ({ ...prev, textAlign }));
+    },
+    []
+  );
+
+  const setCapitalize = useCallback((capitalize: boolean) => {
+    setConfig((prev) => ({ ...prev, capitalize }));
   }, []);
 
-  const handleUnderlineToggle = useCallback(() => {
-    setTextProps((prev: TextProperties) => ({
-      ...prev,
-      isUnderline: !prev.isUnderline,
-    }));
+  const setPosXPercent = useCallback((posXPercent: number) => {
+    setConfig((prev) => ({ ...prev, posXPercent }));
   }, []);
 
-  const handleFontFamilyChange = useCallback((selectedFont: string) => {
-    setTextProps((prev: TextProperties) => ({ ...prev, selectedFont }));
+  const setPosYPercent = useCallback((posYPercent: number) => {
+    setConfig((prev) => ({ ...prev, posYPercent }));
   }, []);
 
-  const handleTextColorChange = useCallback((textColor: string) => {
-    setTextProps((prev: TextProperties) => ({ ...prev, textColor }));
-  }, []);
+  const setBoundingBoxWidthPercent = useCallback(
+    (boundingBoxWidthPercent: number) => {
+      setConfig((prev) => ({ ...prev, boundingBoxWidthPercent }));
+    },
+    []
+  );
 
-  const handlePosX = useCallback((posX: number) => {
-    setTextProps((prev: TextProperties) => ({ ...prev, posX }));
-  }, []);
-
-  const handlePosY = useCallback((posY: number) => {
-    setTextProps((prev: TextProperties) => ({ ...prev, posY }));
-  }, []);
+  const setBoundingBoxHeightPercent = useCallback(
+    (boundingBoxHeightPercent: number) => {
+      setConfig((prev) => ({ ...prev, boundingBoxHeightPercent }));
+    },
+    []
+  );
 
   return {
-    textProps,
-    handleNameChange,
-    handleFontSizeChange,
-    handleBoldToggle,
-    handleItalicToggle,
-    handleUnderlineToggle,
-    handleFontFamilyChange,
-    handleTextColorChange,
-    handlePosX,
-    handlePosY,
+    config,
+    setConfig,
+    setFontFamily,
+    setMaxFontSizePercent,
+    setFontWeight,
+    setFontStyle,
+    setTextDecoration,
+    setTextColor,
+    setTextAlign,
+    setCapitalize,
+    setPosXPercent,
+    setPosYPercent,
+    setBoundingBoxWidthPercent,
+    setBoundingBoxHeightPercent,
   };
 }

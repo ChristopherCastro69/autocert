@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { hasEnvVars } from "@/utils/supabase/check-env-vars";
+import { hasEnvVars } from "@/lib/supabase/check-env-vars";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { signout } from "@/lib/auth-actions"; 
@@ -41,7 +41,7 @@ export default function AuthButton() {
 
   return user ? (
     <div className="flex items-center gap-4">
-      Hey, {user.profile?.full_name}!
+      Hey, {String(user.profile?.full_name ?? "")}!
       <Button
         onClick={() => {
           signout();
