@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CertificateAnimation } from "@/components/marketing/certificate-animation";
-import { CheckCircle2, FileSpreadsheet, Sparkles, MailCheck } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 /* ─── Wave Dividers ─── */
 
@@ -161,26 +161,21 @@ export default function LandingPage() {
 
       {/* ─── HOW IT WORKS ─── */}
       <section className="py-20 md:py-28 px-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl md:text-5xl font-extrabold text-center mb-16">
             How It Works
           </h2>
 
-          <div className="space-y-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
             {steps.map((step, i) => (
-              <div
-                key={step.title}
-                className="flex gap-6 items-start"
-              >
-                <div className="shrink-0 h-12 w-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center text-xl font-extrabold shadow-[0px_4px_0px] shadow-secondary">
+              <div key={step.title} className="text-center md:text-left">
+                <span className="text-6xl md:text-7xl font-extrabold text-secondary/40 leading-none">
                   {i + 1}
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-xl">{step.title}</h3>
-                  <p className="mt-2 text-muted-foreground leading-relaxed">
-                    {step.description}
-                  </p>
-                </div>
+                </span>
+                <h3 className="font-extrabold text-xl mt-3">{step.title}</h3>
+                <p className="mt-2 text-muted-foreground leading-relaxed text-sm">
+                  {step.description}
+                </p>
               </div>
             ))}
           </div>
@@ -256,19 +251,16 @@ const features = [
 
 const steps = [
   {
-    icon: FileSpreadsheet,
-    title: "Upload your template and recipient list",
+    title: "Upload your template and recipients",
     description:
       "Upload a certificate template image and a CSV/XLSX file with your recipient data. Our AI maps columns like name, email, and course automatically.",
   },
   {
-    icon: Sparkles,
     title: "Customize and preview",
     description:
       "Position text fields on your template with percentage-based placement. Preview how each certificate will look with live rendering before generating the full batch.",
   },
   {
-    icon: MailCheck,
     title: "Generate and distribute",
     description:
       "Batch generate all certificates with one click, then download as a ZIP or send personalized emails to every recipient. Track delivery status in real time.",
