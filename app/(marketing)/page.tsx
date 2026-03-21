@@ -1,17 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CertificateAnimation } from "@/components/marketing/certificate-animation";
-import {
-  FileUp,
-  Scaling,
-  SlidersHorizontal,
-  Layers,
-  MailCheck,
-  Building2,
-  FileSpreadsheet,
-  Sparkles,
-  CheckCircle2,
-} from "lucide-react";
+import { CheckCircle2, FileSpreadsheet, Sparkles, MailCheck } from "lucide-react";
 
 /* ─── Wave Dividers ─── */
 
@@ -152,27 +142,12 @@ export default function LandingPage() {
       <WaveTop fill="hsl(var(--accent))" />
       <section className="bg-accent px-6 py-20 md:py-28">
         <div className="max-w-5xl mx-auto">
-          <div className="border-2 border-accent-foreground/15 rounded-xl bg-card overflow-hidden">
-            {/* Row 1 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-accent-foreground/10">
-              {features.slice(0, 3).map((feature) => (
-                <div key={feature.title} className="p-8 md:p-10 text-center space-y-3">
-                  <feature.icon className="h-10 w-10 mx-auto" strokeWidth={1.2} />
-                  <h3 className="font-extrabold text-lg">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-            {/* Row divider */}
-            <div className="border-t border-accent-foreground/10" />
-            {/* Row 2 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-accent-foreground/10">
-              {features.slice(3, 6).map((feature) => (
-                <div key={feature.title} className="p-8 md:p-10 text-center space-y-3">
-                  <feature.icon className="h-10 w-10 mx-auto" strokeWidth={1.2} />
-                  <h3 className="font-extrabold text-lg">{feature.title}</h3>
+          <div className="border-2 border-accent-foreground/15 rounded-2xl bg-card overflow-hidden">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-accent-foreground/10">
+              {features.map((feature) => (
+                <div key={feature.title} className="px-6 py-10 text-center space-y-4">
+                  <div className="flex justify-center" dangerouslySetInnerHTML={{ __html: feature.svg }} />
+                  <h3 className="font-extrabold">{feature.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {feature.description}
                   </p>
@@ -250,40 +225,32 @@ export default function LandingPage() {
 
 const features = [
   {
-    icon: FileUp,
-    title: "Smart File Upload",
+    // Checkbox with checkmark — "instant / done"
+    svg: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="6" width="32" height="36" rx="4" /><path d="M16 24l5 5 10-12" stroke-width="2.5" /></svg>`,
+    title: "Instant Download",
     description:
-      "Upload CSV or XLSX files. AI automatically maps columns to the right fields.",
+      "Generate certificates and download instantly — no signup or payment required.",
   },
   {
-    icon: Scaling,
+    // Four arrows expanding outward — "resize"
+    svg: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8h-6v6" /><path d="M34 8h6v6" /><path d="M14 40h-6v-6" /><path d="M34 40h6v-6" /><path d="M8 8l10 10" /><path d="M40 8l-10 10" /><path d="M8 40l10-10" /><path d="M40 40l-10-10" /></svg>`,
     title: "Auto Resizing",
     description:
-      "Text auto-sizes to fit — no worrying about long names or varying lengths.",
+      "Text auto-sizes to fit so you don't have to worry about long names.",
   },
   {
-    icon: SlidersHorizontal,
+    // Sliders — "customization"
+    svg: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="12" x2="12" y2="36" /><line x1="24" y1="12" x2="24" y2="36" /><line x1="36" y1="12" x2="36" y2="36" /><circle cx="12" cy="20" r="3" fill="currentColor" /><circle cx="24" cy="30" r="3" fill="currentColor" /><circle cx="36" cy="16" r="3" fill="currentColor" /></svg>`,
     title: "Customization",
     description:
-      "Choose fonts, colors, and positioning with a live preview editor.",
+      "Change fonts, colors, and positioning with a live preview editor.",
   },
   {
-    icon: Layers,
-    title: "Batch Generation",
-    description:
-      "Generate hundreds of certificates in seconds with progress tracking.",
-  },
-  {
-    icon: MailCheck,
+    // Envelope with heart/check — "delivery"
+    svg: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="12" width="36" height="26" rx="4" /><path d="M6 16l18 12 18-12" /><circle cx="38" cy="14" r="7" fill="currentColor" stroke="none" /><path d="M34 14l2.5 2.5L41 11" stroke="white" stroke-width="2" /></svg>`,
     title: "Email Delivery",
     description:
       "Send via Gmail or Resend with template variables and delivery tracking.",
-  },
-  {
-    icon: Building2,
-    title: "Multi-org Support",
-    description:
-      "Manage multiple organizations and events with role-based collaboration.",
   },
 ];
 
