@@ -10,16 +10,12 @@ export default function MarketingLayout({
 }) {
   return (
     <>
-      {/* Sticky Nav */}
-      <nav className="sticky top-0 z-50 w-full backdrop-blur-md bg-background/80 border-b">
-        <div className="max-w-7xl mx-auto flex justify-between items-center px-6 h-16">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center shadow-[0px_4px_0px] shadow-secondary group-hover:shadow-[0px_2px_0px] group-hover:translate-y-0.5 transition-all">
-              <Award className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-xl tracking-tight">AutoCert</span>
+      <nav className="w-full flex justify-center border-b h-16">
+        <div className="w-full max-w-7xl flex justify-between items-center px-6">
+          <Link href="/" className="flex items-center gap-2">
+            <Award className="h-6 w-6" />
+            <span className="font-extrabold text-xl">AutoCert</span>
           </Link>
-
           <div className="flex gap-3 items-center">
             <ThemeSwitcher />
             <Button asChild variant="ghost" size="sm">
@@ -35,109 +31,49 @@ export default function MarketingLayout({
       <main className="flex-1">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t bg-card/50">
-        <div className="max-w-7xl mx-auto px-6 py-16">
-          <div className="grid gap-12 md:grid-cols-4">
-            {/* Brand */}
-            <div className="md:col-span-1 space-y-4">
+      <footer className="border-t">
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="grid gap-10 md:grid-cols-4">
+            <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                  <Award className="h-4 w-4 text-primary-foreground" />
-                </div>
-                <span className="font-bold text-lg">AutoCert</span>
+                <Award className="h-5 w-5" />
+                <span className="font-extrabold text-lg">AutoCert</span>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Generate and distribute personalized certificates at scale.
-                Built for event organizers who value their time.
               </p>
             </div>
 
-            {/* Product */}
-            <div className="space-y-4">
-              <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
-                Product
-              </h4>
-              <ul className="space-y-3 text-sm">
-                <li>
-                  <Link href="/sign-up" className="hover:text-secondary transition-colors">
-                    Certificate Generator
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/sign-up" className="hover:text-secondary transition-colors">
-                    Email Distribution
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/sign-up" className="hover:text-secondary transition-colors">
-                    CSV/XLSX Import
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/sign-up" className="hover:text-secondary transition-colors">
-                    Batch Processing
-                  </Link>
-                </li>
+            <div className="space-y-3">
+              <h4 className="font-bold text-sm">Product</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link href="/sign-up" className="hover:text-foreground transition-colors">Certificate Generator</Link></li>
+                <li><Link href="/sign-up" className="hover:text-foreground transition-colors">Email Distribution</Link></li>
+                <li><Link href="/sign-up" className="hover:text-foreground transition-colors">Batch Processing</Link></li>
               </ul>
             </div>
 
-            {/* Features */}
-            <div className="space-y-4">
-              <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
-                Features
-              </h4>
-              <ul className="space-y-3 text-sm">
-                <li>
-                  <Link href="/sign-up" className="hover:text-secondary transition-colors">
-                    AI Column Mapping
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/sign-up" className="hover:text-secondary transition-colors">
-                    Auto Text Sizing
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/sign-up" className="hover:text-secondary transition-colors">
-                    Multi-org Support
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/sign-up" className="hover:text-secondary transition-colors">
-                    Gmail & Resend
-                  </Link>
-                </li>
+            <div className="space-y-3">
+              <h4 className="font-bold text-sm">Features</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link href="/sign-up" className="hover:text-foreground transition-colors">AI Column Mapping</Link></li>
+                <li><Link href="/sign-up" className="hover:text-foreground transition-colors">Auto Text Sizing</Link></li>
+                <li><Link href="/sign-up" className="hover:text-foreground transition-colors">Multi-org Support</Link></li>
               </ul>
             </div>
 
-            {/* Get Started */}
-            <div className="space-y-4">
-              <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
-                Get Started
-              </h4>
-              <ul className="space-y-3 text-sm">
-                <li>
-                  <Link href="/sign-up" className="hover:text-secondary transition-colors">
-                    Create Account
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/sign-in" className="hover:text-secondary transition-colors">
-                    Sign In
-                  </Link>
-                </li>
+            <div className="space-y-3">
+              <h4 className="font-bold text-sm">Get Started</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link href="/sign-up" className="hover:text-foreground transition-colors">Create Account</Link></li>
+                <li><Link href="/sign-in" className="hover:text-foreground transition-colors">Sign In</Link></li>
               </ul>
             </div>
           </div>
 
-          {/* Bottom bar */}
-          <div className="mt-12 pt-8 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-muted-foreground">
-              &copy; {new Date().getFullYear()} AutoCert. All rights reserved.
-            </p>
-            <div className="flex items-center gap-6 text-xs text-muted-foreground">
-              <span>Built with Next.js & Supabase</span>
-            </div>
+          <div className="mt-10 pt-6 border-t flex justify-between items-center text-xs text-muted-foreground">
+            <span>&copy; {new Date().getFullYear()} AutoCert</span>
+            <span>Built with Next.js &amp; Supabase</span>
           </div>
         </div>
       </footer>
