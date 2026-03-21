@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { CertificateAnimation } from "@/components/marketing/certificate-animation";
 import {
   FileUp,
   Scaling,
@@ -233,7 +234,7 @@ export default function LandingPage() {
           </div>
 
           <div className="flex justify-center">
-            <div className="text-8xl select-none">🎓</div>
+            <CertificateAnimation />
           </div>
         </div>
       </section>
