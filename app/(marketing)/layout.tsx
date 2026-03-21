@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { Award } from "lucide-react";
-
 export default function MarketingLayout({
   children,
 }: {
@@ -12,9 +10,8 @@ export default function MarketingLayout({
     <>
       <nav className="w-full flex justify-center border-b h-16">
         <div className="w-full max-w-7xl flex justify-between items-center px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <Award className="h-6 w-6" />
-            <span className="font-extrabold text-xl">AutoCert</span>
+          <Link href="/" className="font-extrabold text-xl">
+            AutoCert
           </Link>
           <div className="flex gap-3 items-center">
             <ThemeSwitcher />
@@ -35,10 +32,7 @@ export default function MarketingLayout({
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid gap-10 md:grid-cols-4">
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Award className="h-5 w-5" />
-                <span className="font-extrabold text-lg">AutoCert</span>
-              </div>
+              <span className="font-extrabold text-lg">AutoCert</span>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Generate and distribute personalized certificates at scale.
               </p>

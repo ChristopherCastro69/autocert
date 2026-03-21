@@ -89,3 +89,13 @@
     height: 60px;
   }
 }
+
+/* Certificate card hover animation */
+.cert-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cert-card:hover {
+  transform: rotate(-2deg) translateY(-4px);
+  box-shadow: 10px 10px 0px hsl(var(--secondary-foreground) / 0.15);
+}

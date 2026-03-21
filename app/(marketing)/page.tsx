@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
-  Award,
-  Upload,
-  Users,
-  Mail,
-  Zap,
-  Shield,
+  FileUp,
+  Scaling,
+  SlidersHorizontal,
+  Layers,
+  MailCheck,
+  Building2,
   FileSpreadsheet,
   Sparkles,
   CheckCircle2,
@@ -83,15 +83,12 @@ export default function LandingPage() {
 
           {/* Certificate preview card */}
           <div className="flex justify-center">
-            <div className="rounded-xl border-2 border-secondary-foreground/20 bg-card p-6 shadow-[6px_6px_0px] shadow-secondary-foreground/15 max-w-sm w-full">
-              <div className="border-2 border-dashed border-secondary/50 rounded-lg p-6 text-center space-y-3 bg-background">
-                <div className="flex justify-center">
-                  <Award className="h-10 w-10 text-secondary" />
-                </div>
+            <div className="cert-card rounded-xl border-2 border-secondary-foreground/20 bg-card p-6 shadow-[6px_6px_0px] shadow-secondary-foreground/15 max-w-sm w-full">
+              <div className="border-2 border-dashed border-secondary/50 rounded-lg p-8 text-center space-y-3 bg-background">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium">
                   Certificate of Completion
                 </p>
-                <p className="text-xl font-bold">Maria Santos</p>
+                <p className="text-2xl font-bold">Maria Santos</p>
                 <div className="w-12 h-0.5 bg-secondary mx-auto" />
                 <p className="text-xs text-muted-foreground">
                   has successfully completed the
@@ -99,7 +96,7 @@ export default function LandingPage() {
                 <p className="text-sm font-semibold">
                   Web Development Bootcamp 2025
                 </p>
-                <p className="text-[10px] text-muted-foreground pt-2">
+                <p className="text-[10px] text-muted-foreground pt-3">
                   March 22, 2026
                 </p>
               </div>
@@ -154,25 +151,33 @@ export default function LandingPage() {
       <WaveTop fill="hsl(var(--accent))" />
       <section className="bg-accent px-6 py-20 md:py-28">
         <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border-2 border-accent-foreground/15 rounded-xl bg-card overflow-hidden">
-            {features.map((feature, i) => (
-              <div
-                key={feature.title}
-                className={`p-8 text-center space-y-3 ${
-                  i < features.length - 1 ? "border-b sm:border-b lg:border-b-0" : ""
-                } ${i % 3 !== 2 ? "lg:border-r" : ""} ${
-                  i % 2 === 0 && i < features.length - 1 ? "sm:border-r" : ""
-                } border-accent-foreground/10`}
-              >
-                <div className="flex justify-center">
-                  <feature.icon className="h-10 w-10 text-foreground" strokeWidth={1.5} />
+          <div className="border-2 border-accent-foreground/15 rounded-xl bg-card overflow-hidden">
+            {/* Row 1 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-accent-foreground/10">
+              {features.slice(0, 3).map((feature) => (
+                <div key={feature.title} className="p-8 md:p-10 text-center space-y-3">
+                  <feature.icon className="h-10 w-10 mx-auto" strokeWidth={1.2} />
+                  <h3 className="font-extrabold text-lg">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {feature.description}
+                  </p>
                 </div>
-                <h3 className="font-extrabold text-lg">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {feature.description}
-                </p>
-              </div>
-            ))}
+              ))}
+            </div>
+            {/* Row divider */}
+            <div className="border-t border-accent-foreground/10" />
+            {/* Row 2 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-accent-foreground/10">
+              {features.slice(3, 6).map((feature) => (
+                <div key={feature.title} className="p-8 md:p-10 text-center space-y-3">
+                  <feature.icon className="h-10 w-10 mx-auto" strokeWidth={1.2} />
+                  <h3 className="font-extrabold text-lg">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -244,37 +249,37 @@ export default function LandingPage() {
 
 const features = [
   {
-    icon: Upload,
+    icon: FileUp,
     title: "Smart File Upload",
     description:
       "Upload CSV or XLSX files. AI automatically maps columns to the right fields.",
   },
   {
-    icon: Zap,
+    icon: Scaling,
     title: "Auto Resizing",
     description:
       "Text auto-sizes to fit — no worrying about long names or varying lengths.",
   },
   {
-    icon: Sparkles,
+    icon: SlidersHorizontal,
     title: "Customization",
     description:
       "Choose fonts, colors, and positioning with a live preview editor.",
   },
   {
-    icon: Shield,
+    icon: Layers,
     title: "Batch Generation",
     description:
       "Generate hundreds of certificates in seconds with progress tracking.",
   },
   {
-    icon: Mail,
+    icon: MailCheck,
     title: "Email Delivery",
     description:
       "Send via Gmail or Resend with template variables and delivery tracking.",
   },
   {
-    icon: Users,
+    icon: Building2,
     title: "Multi-org Support",
     description:
       "Manage multiple organizations and events with role-based collaboration.",
@@ -295,7 +300,7 @@ const steps = [
       "Position text fields on your template with percentage-based placement. Preview how each certificate will look with live rendering before generating the full batch.",
   },
   {
-    icon: Mail,
+    icon: MailCheck,
     title: "Generate and distribute",
     description:
       "Batch generate all certificates with one click, then download as a ZIP or send personalized emails to every recipient. Track delivery status in real time.",
