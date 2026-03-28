@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 import { uploadFile, getPublicUrl } from "@/services/storage.service";
-import { DEFAULT_TEXT_CONFIG, CERTIFICATE_TYPES, SUPPORTED_IMAGE_TYPES, MAX_TEMPLATE_SIZE_MB } from "@/lib/constants";
+import { DEFAULT_TEXT_CONFIG, CERTIFICATE_TYPES, SUPPORTED_IMAGE_TYPES, MAX_TEMPLATE_SIZE_MB, MIN_TEMPLATE_WIDTH, MIN_TEMPLATE_HEIGHT } from "@/lib/constants";
+import { AlertTriangle } from "lucide-react";
 import type { TemplateType } from "@/types";
 
 interface TemplateUploadProps {
@@ -36,6 +37,8 @@ export function TemplateUpload({ open, onOpenChange, eventId, onUploaded }: Temp
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resWarning, setResWarning] = useState<string | null>(null);
+  const [resolution, setResolution] = useState<{ w: number; h: number } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
@@ -43,6 +46,8 @@ export function TemplateUpload({ open, onOpenChange, eventId, onUploaded }: Temp
     setType("participant");
     setFile(null);
     setError(null);
+    setResWarning(null);
+    setResolution(null);
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -60,6 +65,26 @@ export function TemplateUpload({ open, onOpenChange, eventId, onUploaded }: Temp
     }
 
     setError(null);
+    setResWarning(null);
+    setResolution(null);
+
+    // Check image resolution
+    const img = new Image();
+    img.onload = () => {
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+      setResolution({ w, h });
+
+      if (w < MIN_TEMPLATE_WIDTH || h < MIN_TEMPLATE_HEIGHT) {
+        setResWarning(
+          `Image is ${w}×${h}px. For print-quality certificates, we recommend at least ${MIN_TEMPLATE_WIDTH}×${MIN_TEMPLATE_HEIGHT}px.`
+        );
+      }
+
+      URL.revokeObjectURL(img.src);
+    };
+    img.src = URL.createObjectURL(selected);
+
     setFile(selected);
     if (!name) {
       setName(selected.name.replace(/\.[^.]+$/, ""));
@@ -154,6 +179,22 @@ export function TemplateUpload({ open, onOpenChange, eventId, onUploaded }: Temp
               onChange={handleFileChange}
             />
           </div>
+
+          {resolution && !resWarning && (
+            <p className="text-xs text-muted-foreground">
+              {resolution.w}×{resolution.h}px — good resolution
+            </p>
+          )}
+
+          {resWarning && (
+            <div className="flex gap-2 items-start rounded-md bg-yellow-500/10 border border-yellow-500/20 p-3">
+              <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-yellow-500">Low resolution</p>
+                <p className="text-xs text-muted-foreground">{resWarning}</p>
+              </div>
+            </div>
+          )}
 
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>

@@ -1,5 +1,17 @@
 export const SUPPORTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg"];
 export const MAX_TEMPLATE_SIZE_MB = 10;
+export const MIN_TEMPLATE_WIDTH = 2000;
+export const MIN_TEMPLATE_HEIGHT = 1414; // ~A4 landscape ratio at 2000px wide
+
+export const PAPER_SIZES = {
+  original: { label: "Original", width: 0, height: 0 },
+  letter: { label: "Letter (8.5×11\")", width: 3300, height: 2550 }, // landscape at 300 DPI
+  legal: { label: "Legal (8.5×14\")", width: 4200, height: 2550 },
+  a4: { label: "A4 (210×297mm)", width: 3508, height: 2480 },
+  a3: { label: "A3 (297×420mm)", width: 4961, height: 3508 },
+} as const;
+
+export type PaperSize = keyof typeof PAPER_SIZES;
 export const MAX_RECIPIENTS_PER_UPLOAD = 5000;
 
 export const CERTIFICATE_TYPES = [
@@ -41,6 +53,7 @@ export const DEFAULT_TEXT_CONFIG = {
   textColor: "#000000",
   textAlign: "center" as const,
   capitalize: false,
+  outputSize: "original" as const,
   outputFormat: "png" as const,
   outputQuality: 0.9,
 };
