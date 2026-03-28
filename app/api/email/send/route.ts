@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { EMAIL_MAX_ATTEMPTS } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
@@ -20,10 +21,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Use user client for auth check, admin client for job creation
     const supabase = await createClient();
+    const adminDb = createAdminClient();
+
+    // Verify caller is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // Verify org has active email config
-    const { data: emailConfig } = await supabase
+    const { data: emailConfig } = await adminDb
       .from("email_configs")
       .select("id")
       .eq("org_id", orgId)
@@ -37,7 +46,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create email jobs
+    // Create email jobs using admin client (bypasses RLS)
     const jobs = certificateIds.map((certId: string) => ({
       org_id: orgId,
       generated_certificate_id: certId,
@@ -49,7 +58,7 @@ export async function POST(request: NextRequest) {
       scheduled_at: new Date().toISOString(),
     }));
 
-    const { data: createdJobs, error } = await supabase
+    const { data: createdJobs, error } = await adminDb
       .from("email_jobs")
       .insert(jobs)
       .select("id");

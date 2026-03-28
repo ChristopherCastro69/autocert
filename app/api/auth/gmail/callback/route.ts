@@ -26,8 +26,26 @@ export async function GET(request: NextRequest) {
 
     oauth2Client.setCredentials(tokens);
 
-    const tokenInfo = await oauth2Client.getTokenInfo(tokens.access_token);
-    const gmailEmail = tokenInfo.email ?? null;
+    // Get email - try tokenInfo first, fall back to userinfo endpoint
+    let gmailEmail: string | null = null;
+    try {
+      const tokenInfo = await oauth2Client.getTokenInfo(tokens.access_token);
+      gmailEmail = tokenInfo.email ?? null;
+    } catch {
+      // tokenInfo can fail for some token types
+    }
+
+    if (!gmailEmail) {
+      try {
+        const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+          headers: { Authorization: `Bearer ${tokens.access_token}` },
+        });
+        const userInfo = await res.json();
+        gmailEmail = userInfo.email ?? null;
+      } catch {
+        // Fall through with null
+      }
+    }
 
     const supabase = await createClient();
 

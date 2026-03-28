@@ -5,24 +5,46 @@ import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useOrg } from "@/components/context/OrgContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { EmailComposer } from "@/components/distribute/email-composer";
 import { DeliveryStatus } from "@/components/distribute/delivery-status";
 import { EmailConfigForm } from "@/components/distribute/email-config-form";
 import { SendProgress } from "@/components/distribute/send-progress";
-import { Mail, Settings } from "lucide-react";
-import Link from "next/link";
-import type { EmailConfig, EmailJob, GeneratedCertificateWithRecipient, Event } from "@/types";
+import {
+  Mail,
+  Settings,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
+import type {
+  EmailConfig,
+  EmailJob,
+  GeneratedCertificateWithRecipient,
+  Event,
+} from "@/types";
 
 export default function DistributePage() {
-  const { eventId, orgSlug } = useParams<{ eventId: string; orgSlug: string }>();
+  const { eventId, orgSlug } = useParams<{
+    eventId: string;
+    orgSlug: string;
+  }>();
   const { activeOrg } = useOrg();
   const [event, setEvent] = useState<Event | null>(null);
   const [emailConfig, setEmailConfig] = useState<EmailConfig | null>(null);
-  const [certificates, setCertificates] = useState<GeneratedCertificateWithRecipient[]>([]);
+  const [certificates, setCertificates] =
+    useState<GeneratedCertificateWithRecipient[]>([]);
   const [jobs, setJobs] = useState<EmailJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [showConfig, setShowConfig] = useState(false);
 
   const supabase = createClient();
@@ -40,7 +62,7 @@ export default function DistributePage() {
         .maybeSingle(),
       supabase
         .from("generated_certificates")
-        .select("*, recipients(id, first_name, last_name, email)")
+        .select("*, recipients(id, first_name, last_name, email, event_id)")
         .eq("recipients.event_id", eventId)
         .not("recipients", "is", null),
       supabase
@@ -53,11 +75,13 @@ export default function DistributePage() {
     if (eventRes.data) setEvent(eventRes.data as Event);
     if (configRes.data) setEmailConfig(configRes.data as EmailConfig);
     if (certsRes.data) {
-      setCertificates(certsRes.data as unknown as GeneratedCertificateWithRecipient[]);
+      setCertificates(
+        certsRes.data as unknown as GeneratedCertificateWithRecipient[]
+      );
     }
     if (jobsRes.data) setJobs(jobsRes.data as EmailJob[]);
     setLoading(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeOrg, eventId]);
 
   useEffect(() => {
@@ -72,21 +96,13 @@ export default function DistributePage() {
       .eq("org_id", activeOrg.id)
       .order("created_at", { ascending: false });
     if (data) setJobs(data as EmailJob[]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeOrg]);
 
-  const handleSend = async (subject: string, body: string) => {
-    if (!activeOrg) return;
+  const handleSend = async (subject: string, body: string, certIds: string[]) => {
+    if (!activeOrg || certIds.length === 0) return;
     setSending(true);
-
-    const certIds = certificates
-      .filter((c) => c.recipients.email)
-      .map((c) => c.id);
-
-    if (certIds.length === 0) {
-      setSending(false);
-      return;
-    }
+    setSendError(null);
 
     try {
       const res = await fetch("/api/email/send", {
@@ -102,20 +118,26 @@ export default function DistributePage() {
 
       if (!res.ok) {
         const err = await res.json();
-        console.error("Send error:", err);
+        setSendError(err.error ?? "Failed to send emails");
       }
 
-      // Refresh jobs after sending
+      // Start refreshing jobs
       await refreshJobs();
     } catch (error) {
-      console.error("Send error:", error);
+      setSendError(
+        error instanceof Error ? error.message : "Failed to send emails"
+      );
     } finally {
       setSending(false);
     }
   };
 
   if (loading) {
-    return <p className="text-muted-foreground">Loading...</p>;
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   if (!activeOrg || !event) return null;
@@ -124,20 +146,38 @@ export default function DistributePage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold">Distribute Certificates</h1>
+          <p className="text-sm text-muted-foreground">
+            Send certificates to recipients via email
+          </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowConfig(!showConfig)}
-        >
-          <Settings className="h-4 w-4 mr-2" />
-          Email Settings
-        </Button>
+        <div className="flex items-center gap-2">
+          {hasConfig && (
+            <Badge
+              variant="outline"
+              className="gap-1.5 text-green-600 border-green-600/20"
+            >
+              <CheckCircle2 className="h-3 w-3" />
+              {emailConfig.provider === "gmail"
+                ? emailConfig.gmail_email
+                : emailConfig.resend_from_email}
+            </Badge>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowConfig(!showConfig)}
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            {showConfig ? "Close" : "Email Settings"}
+          </Button>
+        </div>
       </div>
 
+      {/* Config form (toggled) */}
       {showConfig && (
         <EmailConfigForm
           orgId={activeOrg.id}
@@ -149,46 +189,64 @@ export default function DistributePage() {
         />
       )}
 
+      {/* No config state */}
       {!hasConfig && !showConfig && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5" />
-              Email Not Configured
-            </CardTitle>
-            <CardDescription>
-              Set up an email provider to distribute certificates.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex gap-3">
-            <Button onClick={() => setShowConfig(true)}>
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center gap-3 py-10">
+            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+              <Mail className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div className="text-center">
+              <CardTitle className="text-base">
+                Email Not Configured
+              </CardTitle>
+              <CardDescription className="mt-1">
+                Connect Gmail or Resend to start sending certificates.
+              </CardDescription>
+            </div>
+            <Button onClick={() => setShowConfig(true)} className="mt-2">
               Configure Email
             </Button>
-            <Link href={`/dashboard/${orgSlug}/settings`}>
-              <Button variant="outline">Go to Settings</Button>
-            </Link>
           </CardContent>
         </Card>
       )}
 
+      {/* Main content when config exists */}
       {hasConfig && (
         <>
           {certificates.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-muted-foreground">
-                  No generated certificates found. Generate certificates first before distributing.
-                </p>
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center gap-3 py-10">
+                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                  <AlertCircle className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div className="text-center">
+                  <p className="font-medium">No certificates generated</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Generate certificates first before distributing them.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           ) : (
             <>
+              {/* Error banner */}
+              {sendError && (
+                <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  {sendError}
+                </div>
+              )}
+
+              {/* Email composer */}
               <EmailComposer
                 eventName={event.name}
                 certificates={certificates}
                 onSend={handleSend}
                 sending={sending}
               />
+
+              {/* Progress + delivery log */}
               <SendProgress jobs={jobs} />
               <DeliveryStatus
                 jobs={jobs}
