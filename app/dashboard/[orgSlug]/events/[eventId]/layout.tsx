@@ -185,13 +185,13 @@ export default function EventDetailLayout({
         <div className="max-w-7xl mx-auto px-6 py-5">{children}</div>
       </div>
 
-      {/* Bottom pagination */}
-      <div className="shrink-0 border-t">
-        <div className="px-5 flex items-center justify-between h-11">
+      {/* Bottom navigation */}
+      <div className="shrink-0 border-t bg-card/50">
+        <div className="px-5 flex items-center justify-between h-12">
           {prevStep ? (
-            <Button variant="ghost" size="sm" className="h-8 text-[13px]" asChild>
+            <Button variant="ghost" size="sm" className="text-[13px] gap-1.5" asChild>
               <Link href={`${basePath}/${prevStep.key}`}>
-                <ChevronLeft className="h-3.5 w-3.5 mr-1" />
+                <ChevronLeft className="h-3.5 w-3.5" />
                 {prevStep.label}
               </Link>
             </Button>
@@ -199,15 +199,28 @@ export default function EventDetailLayout({
             <div />
           )}
 
-          <span className="text-[13px] text-muted-foreground">
-            Step {activeIndex + 1} of {steps.length}
-          </span>
+          {/* Step dots */}
+          <div className="flex items-center gap-1.5">
+            {steps.map((step, index) => (
+              <div
+                key={step.key}
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  index === activeIndex
+                    ? "w-5 bg-primary"
+                    : getStepStatus(step.key, stats) === "complete"
+                      ? "w-1.5 bg-primary/50"
+                      : "w-1.5 bg-muted-foreground/20"
+                )}
+              />
+            ))}
+          </div>
 
           {nextStep ? (
-            <Button variant="ghost" size="sm" className="h-8 text-[13px]" asChild>
+            <Button variant="ghost" size="sm" className="text-[13px] gap-1.5" asChild>
               <Link href={`${basePath}/${nextStep.key}`}>
                 {nextStep.label}
-                <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                <ChevronRight className="h-3.5 w-3.5" />
               </Link>
             </Button>
           ) : (
