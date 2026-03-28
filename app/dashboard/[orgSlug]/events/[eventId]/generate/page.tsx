@@ -28,7 +28,6 @@ import {
 import { Label } from "@/components/ui/label";
 import {
   Loader2,
-  Play,
   FileImage,
   Users,
   CheckCircle2,
@@ -130,24 +129,11 @@ export default function GeneratePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">Generate Certificates</h1>
-          <p className="text-sm text-muted-foreground">
-            {recipients.length} recipient{recipients.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <Button
-          onClick={handleGenerate}
-          disabled={isGenerating || !selectedTemplate}
-        >
-          {isGenerating ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Play className="mr-2 h-4 w-4" />
-          )}
-          Generate All
-        </Button>
+      <div>
+        <h1 className="text-lg font-semibold">Generate Certificates</h1>
+        <p className="text-sm text-muted-foreground">
+          {recipients.length} recipient{recipients.length !== 1 ? "s" : ""}
+        </p>
       </div>
 
       {templates.length > 1 && (
@@ -277,6 +263,8 @@ export default function GeneratePage() {
           template={selectedTemplate}
           recipients={recipients}
           onConfigChange={handleConfigChange}
+          onGenerate={handleGenerate}
+          isGenerating={isGenerating}
         />
       )}
     </div>

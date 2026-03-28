@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Template, Recipient, TemplateTextConfig } from "@/types";
 import { useTextProperties } from "@/hooks/use-text-properties";
 import { CertificatePreview } from "./certificate-preview";
@@ -23,18 +23,22 @@ import {
 } from "@/components/ui/select";
 import { PAPER_SIZES, MIN_TEMPLATE_WIDTH, MIN_TEMPLATE_HEIGHT } from "@/lib/constants";
 import type { PaperSize } from "@/lib/constants";
-import { ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { ChevronLeft, ChevronRight, AlertTriangle, Play, Loader2 } from "lucide-react";
 
 interface CertificateEditorProps {
   template: Template;
   recipients: Recipient[];
   onConfigChange?: (config: TemplateTextConfig) => void;
+  onGenerate?: () => void;
+  isGenerating?: boolean;
 }
 
 export function CertificateEditor({
   template,
   recipients,
   onConfigChange,
+  onGenerate,
+  isGenerating,
 }: CertificateEditorProps) {
   const {
     config,
@@ -54,6 +58,25 @@ export function CertificateEditor({
   } = useTextProperties(template.text_config);
 
   const [templateRes, setTemplateRes] = useState<{ w: number; h: number } | null>(null);
+  const [canScrollDown, setCanScrollDown] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Track whether the scrollable area has more content below
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const check = () => {
+      setCanScrollDown(el.scrollHeight - el.scrollTop - el.clientHeight > 8);
+    };
+    check();
+    el.addEventListener("scroll", check);
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener("scroll", check);
+      observer.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const img = new Image();
@@ -125,7 +148,7 @@ export function CertificateEditor({
 
       <div className="lg:sticky lg:top-0 lg:self-start">
       <Card className="flex flex-col lg:max-h-[calc(100vh-21rem)]">
-        <div className="flex-1 overflow-y-auto">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto relative">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Text Style</CardTitle>
           </CardHeader>
@@ -207,6 +230,27 @@ export function CertificateEditor({
               </div>
             )}
           </CardContent>
+        </div>
+
+        {/* Scroll fade indicator */}
+        {canScrollDown && (
+          <div className="h-8 bg-gradient-to-t from-card to-transparent pointer-events-none -mt-8 relative z-10 shrink-0" />
+        )}
+
+        {/* Pinned Generate button */}
+        <div className="border-t p-4 shrink-0">
+          <Button
+            className="w-full"
+            onClick={onGenerate}
+            disabled={isGenerating}
+          >
+            {isGenerating ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Play className="mr-2 h-4 w-4" />
+            )}
+            {isGenerating ? "Generating..." : "Generate All"}
+          </Button>
         </div>
       </Card>
       </div>

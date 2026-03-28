@@ -7,6 +7,7 @@ import {
   resolveConfig,
   renderText,
 } from "@/services/certificate.service";
+import { PAPER_SIZES } from "@/lib/constants";
 
 interface CertificatePreviewProps {
   templateUrl: string;
@@ -30,18 +31,34 @@ export function CertificatePreview({
 
     try {
       const img = await loadImage(templateUrl);
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
 
-      setDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+      // Determine output dimensions
+      const sizeKey = textConfig.outputSize ?? "original";
+      const paper = PAPER_SIZES[sizeKey];
+      const outW = sizeKey === "original" ? img.naturalWidth : paper.width;
+      const outH = sizeKey === "original" ? img.naturalHeight : paper.height;
 
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0);
+      // Render text at native resolution
+      const srcCanvas = document.createElement("canvas");
+      srcCanvas.width = img.naturalWidth;
+      srcCanvas.height = img.naturalHeight;
+      const srcCtx = srcCanvas.getContext("2d")!;
+      srcCtx.drawImage(img, 0, 0);
 
       if (recipientName) {
         const resolved = resolveConfig(img, textConfig);
-        renderText(ctx, recipientName, resolved, textConfig);
+        renderText(srcCtx, recipientName, resolved, textConfig);
       }
+
+      // Scale to output size for preview
+      canvas.width = outW;
+      canvas.height = outH;
+      const ctx = canvas.getContext("2d")!;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(srcCanvas, 0, 0, outW, outH);
+
+      setDimensions({ width: outW, height: outH });
     } catch {
       // Template may still be loading
     }
