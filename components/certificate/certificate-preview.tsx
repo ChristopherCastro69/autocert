@@ -8,6 +8,7 @@ import {
   renderText,
 } from "@/services/certificate.service";
 import { PAPER_SIZES } from "@/lib/constants";
+import { AlertTriangle } from "lucide-react";
 
 interface CertificatePreviewProps {
   templateUrl: string;
@@ -23,11 +24,14 @@ export function CertificatePreview({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const render = useCallback(async () => {
     const canvas = canvasRef.current;
     if (!canvas || !templateUrl) return;
+
+    setError(null);
 
     try {
       const img = await loadImage(templateUrl);
@@ -42,7 +46,11 @@ export function CertificatePreview({
       const srcCanvas = document.createElement("canvas");
       srcCanvas.width = img.naturalWidth;
       srcCanvas.height = img.naturalHeight;
-      const srcCtx = srcCanvas.getContext("2d")!;
+      const srcCtx = srcCanvas.getContext("2d");
+      if (!srcCtx) {
+        setError("Canvas too large for this browser");
+        return;
+      }
       srcCtx.drawImage(img, 0, 0);
 
       if (recipientName) {
@@ -53,14 +61,19 @@ export function CertificatePreview({
       // Scale to output size for preview
       canvas.width = outW;
       canvas.height = outH;
-      const ctx = canvas.getContext("2d")!;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        setError("Canvas too large for this browser");
+        return;
+      }
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
       ctx.drawImage(srcCanvas, 0, 0, outW, outH);
 
       setDimensions({ width: outW, height: outH });
-    } catch {
-      // Template may still be loading
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to load template";
+      setError(msg);
     }
   }, [templateUrl, recipientName, textConfig]);
 
@@ -90,6 +103,14 @@ export function CertificatePreview({
         {!templateUrl && (
           <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
             No template selected
+          </div>
+        )}
+        {error && (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted/80">
+            <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              {error}
+            </div>
           </div>
         )}
       </div>

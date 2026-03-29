@@ -32,13 +32,21 @@ export function resolveConfig(
   const w = img.naturalWidth;
   const h = img.naturalHeight;
 
+  // Clamp percentages to safe ranges
+  const clamp = (val: number, min: number, max: number) =>
+    Math.max(min, Math.min(max, val));
+
+  const bbw = clamp(config.boundingBoxWidthPercent, 1, 100);
+  const bbh = clamp(config.boundingBoxHeightPercent, 1, 100);
+  const maxFont = clamp(config.maxFontSizePercent, 0.5, 50);
+
   return {
-    posX: (config.posXPercent / 100) * w,
-    posY: (config.posYPercent / 100) * h,
-    boundingBoxWidth: (config.boundingBoxWidthPercent / 100) * w,
-    boundingBoxHeight: (config.boundingBoxHeightPercent / 100) * h,
-    maxFontSize: (config.maxFontSizePercent / 100) * h,
-    minFontSize: config.minFontSizePx,
+    posX: clamp((config.posXPercent / 100) * w, 0, w),
+    posY: clamp((config.posYPercent / 100) * h, 0, h),
+    boundingBoxWidth: Math.max(1, (bbw / 100) * w),
+    boundingBoxHeight: Math.max(1, (bbh / 100) * h),
+    maxFontSize: Math.max(8, (maxFont / 100) * h),
+    minFontSize: Math.max(8, config.minFontSizePx),
   };
 }
 
@@ -48,6 +56,8 @@ export function renderText(
   resolved: ResolvedConfig,
   config: TemplateTextConfig
 ): void {
+  if (!name || !name.trim()) return; // Skip rendering for empty names
+
   const displayName = config.capitalize ? name.toUpperCase() : name;
 
   const fit = autoFitText(
@@ -124,6 +134,16 @@ function getOutputDimensions(
   return { width: paper.width, height: paper.height };
 }
 
+function getCanvasContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error(
+      `Failed to create canvas context (${canvas.width}×${canvas.height}). The image may be too large for your browser.`
+    );
+  }
+  return ctx;
+}
+
 export async function generateSingleCertificate(
   templateSrc: string,
   recipientName: string,
@@ -136,7 +156,7 @@ export async function generateSingleCertificate(
   const srcCanvas = document.createElement("canvas");
   srcCanvas.width = img.naturalWidth;
   srcCanvas.height = img.naturalHeight;
-  const srcCtx = srcCanvas.getContext("2d")!;
+  const srcCtx = getCanvasContext(srcCanvas);
   srcCtx.drawImage(img, 0, 0);
   const resolved = resolveConfig(img, config);
   renderText(srcCtx, recipientName, resolved, config);
@@ -145,7 +165,7 @@ export async function generateSingleCertificate(
   const outCanvas = document.createElement("canvas");
   outCanvas.width = width;
   outCanvas.height = height;
-  const outCtx = outCanvas.getContext("2d")!;
+  const outCtx = getCanvasContext(outCanvas);
   outCtx.imageSmoothingEnabled = true;
   outCtx.imageSmoothingQuality = "high";
   outCtx.drawImage(srcCanvas, 0, 0, width, height);
@@ -191,7 +211,7 @@ export async function* generateBatch(
     const srcCanvas = document.createElement("canvas");
     srcCanvas.width = img.naturalWidth;
     srcCanvas.height = img.naturalHeight;
-    const srcCtx = srcCanvas.getContext("2d")!;
+    const srcCtx = getCanvasContext(srcCanvas);
     srcCtx.drawImage(img, 0, 0);
     const resolved = resolveConfig(img, config);
     renderText(srcCtx, name, resolved, config);
@@ -201,7 +221,7 @@ export async function* generateBatch(
     if (needsScale) {
       outCanvas.width = width;
       outCanvas.height = height;
-      const outCtx = outCanvas.getContext("2d")!;
+      const outCtx = getCanvasContext(outCanvas);
       outCtx.imageSmoothingEnabled = true;
       outCtx.imageSmoothingQuality = "high";
       outCtx.drawImage(srcCanvas, 0, 0, width, height);

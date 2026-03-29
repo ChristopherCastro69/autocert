@@ -142,6 +142,7 @@ export default function GeneratePage() {
           <Select
             value={selectedTemplate?.id ?? ""}
             onValueChange={handleTemplateChange}
+            disabled={isGenerating}
           >
             <SelectTrigger className="mt-1">
               <SelectValue placeholder="Select template" />

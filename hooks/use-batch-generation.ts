@@ -59,33 +59,43 @@ export function useBatchGeneration() {
         );
 
         let index = 0;
+        let skipped = 0;
         for await (const { name, blob } of generator) {
           if (cancelledRef.current) break;
 
           const recipient = recipients[index];
-          const safeName = name.replace(/[^a-zA-Z0-9_-]/g, "_");
-          const storagePath = `certificates/${storageFolderName}/${safeName}.${config.outputFormat}`;
-
-          await uploadFile(supabase, "autocert", storagePath, blob, {
-            contentType: `image/${config.outputFormat}`,
-            upsert: true,
-          });
-
-          const publicUrl = getPublicUrl(supabase, storagePath);
-
-          batchResults.push({
-            recipientId: recipient.id,
-            recipientName: name,
-            imageUrl: publicUrl,
-          });
-
-          dbInputs.push({
-            recipient_id: recipient.id,
-            template_id: templateId,
-            image_url: publicUrl,
-          });
-
           index++;
+
+          try {
+            const safeName = name.replace(/[^a-zA-Z0-9_\- ]/g, "").replace(/\s+/g, "_") || recipient.id;
+            const storagePath = `certificates/${storageFolderName}/${safeName}.${config.outputFormat}`;
+
+            await uploadFile(supabase, "autocert", storagePath, blob, {
+              contentType: `image/${config.outputFormat}`,
+              upsert: true,
+            });
+
+            const publicUrl = getPublicUrl(supabase, storagePath);
+
+            batchResults.push({
+              recipientId: recipient.id,
+              recipientName: name,
+              imageUrl: publicUrl,
+            });
+
+            dbInputs.push({
+              recipient_id: recipient.id,
+              template_id: templateId,
+              image_url: publicUrl,
+            });
+          } catch {
+            skipped++;
+            // Continue with next certificate instead of crashing the batch
+          }
+        }
+
+        if (skipped > 0) {
+          setError(`${skipped} certificate${skipped !== 1 ? "s" : ""} failed to upload`);
         }
 
         if (!cancelledRef.current && dbInputs.length > 0) {

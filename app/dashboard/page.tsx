@@ -1,42 +1,138 @@
 "use client";
 
 import { useOrg } from "@/components/context/OrgContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Building2 } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Building2, Plus, ArrowRight, Calendar } from "lucide-react";
+import Link from "next/link";
 
 export default function DashboardPage() {
   const { user, organizations, loading, refreshOrgs } = useOrg();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [showCreateForm, setShowCreateForm] = useState(
+    searchParams.get("new") === "true"
+  );
+  const [eventCounts, setEventCounts] = useState<Record<string, number>>({});
 
-  // Redirect to first org if user already has one
+  // Only auto-redirect if user has exactly 1 org
   useEffect(() => {
-    if (!loading && organizations.length > 0) {
+    if (!loading && organizations.length === 1) {
       router.replace(`/dashboard/${organizations[0].slug}`);
     }
   }, [loading, organizations, router]);
 
-  if (loading) {
+  // Fetch event counts for each org
+  useEffect(() => {
+    if (organizations.length <= 1) return;
+    const fetchCounts = async () => {
+      const supabase = createClient();
+      const counts: Record<string, number> = {};
+      for (const org of organizations) {
+        const { count } = await supabase
+          .from("events")
+          .select("id", { count: "exact", head: true })
+          .eq("org_id", org.id);
+        counts[org.id] = count ?? 0;
+      }
+      setEventCounts(counts);
+    };
+    fetchCounts();
+  }, [organizations]);
+
+  if (loading || organizations.length === 1) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">Loading...</p>
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
 
-  if (organizations.length > 0) {
-    return null; // Redirecting...
+  if (organizations.length === 0 || showCreateForm) {
+    return (
+      <CreateOrgForm
+        onCreated={refreshOrgs}
+        showBack={organizations.length > 0}
+        onBack={() => setShowCreateForm(false)}
+      />
+    );
   }
 
-  return <CreateOrgForm onCreated={refreshOrgs} />;
+  return (
+    <div className="max-w-3xl mx-auto py-12 px-6">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-semibold">Your Organizations</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Choose an organization to manage
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowCreateForm(true)}
+        >
+          <Plus className="h-4 w-4 mr-1.5" />
+          New Organization
+        </Button>
+      </div>
+
+      <div className="grid gap-3">
+        {organizations.map((org) => (
+          <Link
+            key={org.id}
+            href={`/dashboard/${org.slug}`}
+            className="group"
+          >
+            <Card className="transition-all hover:shadow-md hover:border-primary/30">
+              <CardContent className="flex items-center gap-4 py-5">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Building2 className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="font-semibold truncate">{org.name}</h2>
+                  <div className="flex items-center gap-3 mt-0.5">
+                    <span className="text-xs text-muted-foreground">
+                      /{org.slug}
+                    </span>
+                    {eventCounts[org.id] !== undefined && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {eventCounts[org.id]} event{eventCounts[org.id] !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
 }
 
-function CreateOrgForm({ onCreated }: { onCreated: () => Promise<void> }) {
+function CreateOrgForm({
+  onCreated,
+  showBack,
+  onBack,
+}: {
+  onCreated: () => Promise<void>;
+  showBack?: boolean;
+  onBack?: () => void;
+}) {
   const { user } = useOrg();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -125,9 +221,21 @@ function CreateOrgForm({ onCreated }: { onCreated: () => Promise<void> }) {
               </p>
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting ? "Creating..." : "Create organization"}
-            </Button>
+            <div className="flex gap-2">
+              {showBack && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={onBack}
+                >
+                  Back
+                </Button>
+              )}
+              <Button type="submit" className="flex-1" disabled={submitting}>
+                {submitting ? "Creating..." : "Create organization"}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
