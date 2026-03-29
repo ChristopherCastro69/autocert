@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmailComposer } from "@/components/distribute/email-composer";
+import type { GmailAlias } from "@/components/distribute/email-composer";
 import { DeliveryStatus } from "@/components/distribute/delivery-status";
 import { EmailConfigForm } from "@/components/distribute/email-config-form";
 import { SendProgress } from "@/components/distribute/send-progress";
@@ -24,6 +25,7 @@ import {
   CheckCircle2,
   Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import type {
   EmailConfig,
   EmailJob,
@@ -42,6 +44,7 @@ export default function DistributePage() {
   const [certificates, setCertificates] =
     useState<GeneratedCertificateWithRecipient[]>([]);
   const [jobs, setJobs] = useState<EmailJob[]>([]);
+  const [aliases, setAliases] = useState<GmailAlias[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
@@ -52,7 +55,7 @@ export default function DistributePage() {
   const fetchData = useCallback(async () => {
     if (!activeOrg) return;
 
-    const [eventRes, configRes, certsRes, jobsRes] = await Promise.all([
+    const [eventRes, configRes, certsRes] = await Promise.all([
       supabase.from("events").select("*").eq("id", eventId).single(),
       supabase
         .from("email_configs")
@@ -65,15 +68,37 @@ export default function DistributePage() {
         .select("*, recipients(id, first_name, last_name, email, event_id)")
         .eq("recipients.event_id", eventId)
         .not("recipients", "is", null),
-      supabase
-        .from("email_jobs")
-        .select("*")
-        .eq("org_id", activeOrg.id)
-        .order("created_at", { ascending: false }),
     ]);
 
+    // Fetch jobs scoped to this event's certificates
+    const certIds = (certsRes.data ?? []).map((c: { id: string }) => c.id);
+    const jobsRes = certIds.length > 0
+      ? await supabase
+          .from("email_jobs")
+          .select("*")
+          .in("generated_certificate_id", certIds)
+          .order("created_at", { ascending: false })
+      : { data: [] };
+
     if (eventRes.data) setEvent(eventRes.data as Event);
-    if (configRes.data) setEmailConfig(configRes.data as EmailConfig);
+    if (configRes.data) {
+      setEmailConfig(configRes.data as EmailConfig);
+      // Fetch Gmail aliases if gmail provider
+      if ((configRes.data as EmailConfig).provider === "gmail") {
+        try {
+          const aliasRes = await fetch(`/api/auth/gmail/aliases?orgId=${activeOrg.id}`);
+          if (aliasRes.ok) {
+            const { aliases: fetchedAliases } = await aliasRes.json();
+            setAliases(fetchedAliases ?? []);
+          } else {
+            const err = await aliasRes.json().catch(() => null);
+            toast.error(err?.error ?? "Could not load sender aliases");
+          }
+        } catch {
+          toast.error("Could not load sender aliases — check your connection");
+        }
+      }
+    }
     if (certsRes.data) {
       setCertificates(
         certsRes.data as unknown as GeneratedCertificateWithRecipient[]
@@ -89,17 +114,18 @@ export default function DistributePage() {
   }, [fetchData]);
 
   const refreshJobs = useCallback(async () => {
-    if (!activeOrg) return;
+    if (certificates.length === 0) return;
+    const certIds = certificates.map((c) => c.id);
     const { data } = await supabase
       .from("email_jobs")
       .select("*")
-      .eq("org_id", activeOrg.id)
+      .in("generated_certificate_id", certIds)
       .order("created_at", { ascending: false });
     if (data) setJobs(data as EmailJob[]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeOrg]);
+  }, [certificates]);
 
-  const handleSend = async (subject: string, body: string, certIds: string[]) => {
+  const handleSend = async (subject: string, body: string, certIds: string[], fromEmail: string) => {
     if (!activeOrg || certIds.length === 0) return;
     setSending(true);
     setSendError(null);
@@ -113,20 +139,25 @@ export default function DistributePage() {
           certificateIds: certIds,
           subject,
           body,
+          fromEmail,
         }),
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        setSendError(err.error ?? "Failed to send emails");
+        const err = await res.json().catch(() => null);
+        const msg = err?.error ?? "Failed to send emails";
+        setSendError(msg);
+        toast.error(msg);
+      } else {
+        const data = await res.json();
+        toast.success(`${data.jobCount} email${data.jobCount !== 1 ? "s" : ""} queued for delivery`);
       }
 
-      // Start refreshing jobs
       await refreshJobs();
     } catch (error) {
-      setSendError(
-        error instanceof Error ? error.message : "Failed to send emails"
-      );
+      const msg = error instanceof Error ? error.message : "Failed to send emails";
+      setSendError(msg);
+      toast.error(msg);
     } finally {
       setSending(false);
     }
@@ -242,6 +273,7 @@ export default function DistributePage() {
               <EmailComposer
                 eventName={event.name}
                 certificates={certificates}
+                aliases={aliases}
                 onSend={handleSend}
                 sending={sending}
               />

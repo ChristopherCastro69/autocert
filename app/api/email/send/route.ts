@@ -5,7 +5,7 @@ import { EMAIL_MAX_ATTEMPTS } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   try {
-    const { orgId, certificateIds, subject, body } = await request.json();
+    const { orgId, certificateIds, subject, body, fromEmail } = await request.json();
 
     if (!orgId || !Array.isArray(certificateIds) || certificateIds.length === 0) {
       return NextResponse.json(
@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
       generated_certificate_id: certId,
       subject,
       body,
+      from_email: fromEmail || null,
       status: "pending" as const,
       attempts: 0,
       max_attempts: EMAIL_MAX_ATTEMPTS,

@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
 
       const result = await provider.send({
         to: typedCert.recipients.email,
-        from: config.gmail_email ?? config.resend_from_email ?? "",
+        from: job.from_email ?? config.gmail_email ?? config.resend_from_email ?? "",
         subject: resolvedSubject,
         body: resolvedBody,
         attachmentName: `${recipientFirstName}_${recipientLastName}_certificate.png`,

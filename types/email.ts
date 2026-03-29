@@ -23,6 +23,7 @@ export interface EmailJob {
   generated_certificate_id: string;
   subject: string | null;
   body: string | null;
+  from_email: string | null;
   status: EmailJobStatus;
   attempts: number;
   max_attempts: number;

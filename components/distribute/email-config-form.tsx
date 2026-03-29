@@ -25,7 +25,7 @@ export function EmailConfigForm({ orgId, config, onSaved }: EmailConfigFormProps
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  const isGmailConnected = config?.provider === "gmail" && !!config.gmail_email;
+  const isGmailConnected = config?.provider === "gmail" && !!config.gmail_access_token;
   const isResendConnected = config?.provider === "resend" && !!config.resend_api_key;
 
   const handleConnectGmail = () => {

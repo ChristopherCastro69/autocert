@@ -189,8 +189,22 @@ export function DeliveryStatus({
                       <td className="py-2.5 pr-4 tabular-nums text-muted-foreground">
                         {job.attempts}/{job.max_attempts}
                       </td>
-                      <td className="py-2.5 text-muted-foreground text-xs truncate max-w-[200px]">
-                        {job.last_error ?? "-"}
+                      <td
+                        className="py-2.5 text-muted-foreground text-xs max-w-[300px] cursor-default"
+                        title={job.last_error ?? undefined}
+                      >
+                        {job.last_error ? (
+                          <details className="group">
+                            <summary className="truncate list-none cursor-pointer hover:text-foreground transition-colors">
+                              {job.last_error}
+                            </summary>
+                            <p className="mt-1 whitespace-pre-wrap break-words text-destructive bg-destructive/5 rounded p-2">
+                              {job.last_error}
+                            </p>
+                          </details>
+                        ) : (
+                          "-"
+                        )}
                       </td>
                     </tr>
                   );

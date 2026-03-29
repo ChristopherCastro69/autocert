@@ -15,6 +15,13 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Send,
   Eye,
   Code,
@@ -27,14 +34,22 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import type { GeneratedCertificateWithRecipient } from "@/types";
 
 type SendMode = "all" | "test" | "custom";
 
+export interface GmailAlias {
+  email: string;
+  displayName: string;
+  isPrimary: boolean;
+}
+
 interface EmailComposerProps {
   eventName: string;
   certificates: GeneratedCertificateWithRecipient[];
-  onSend: (subject: string, body: string, certIds: string[]) => void;
+  aliases: GmailAlias[];
+  onSend: (subject: string, body: string, certIds: string[], fromEmail: string) => void;
   sending: boolean;
 }
 
@@ -47,6 +62,7 @@ const TEMPLATE_VARS = [
 export function EmailComposer({
   eventName,
   certificates,
+  aliases,
   onSend,
   sending,
 }: EmailComposerProps) {
@@ -57,6 +73,9 @@ export function EmailComposer({
     `<p>Hi {{firstName}},</p>\n<p>Thank you for participating in <strong>{{eventName}}</strong>. Please find your certificate attached.</p>\n<p>Best regards</p>`
   );
   const [showPreview, setShowPreview] = useState(true);
+  const [fromEmail, setFromEmail] = useState(
+    aliases.find((a) => a.isPrimary)?.email ?? aliases[0]?.email ?? ""
+  );
   const [sendMode, setSendMode] = useState<SendMode>("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [recipientSearch, setRecipientSearch] = useState("");
@@ -140,13 +159,36 @@ export function EmailComposer({
   };
 
   const handleSend = () => {
-    if (!subject.trim() || !body.trim() || targetCerts.length === 0) return;
+    if (!subject.trim()) {
+      toast.error("Subject is required");
+      return;
+    }
+    if (!body.trim()) {
+      toast.error("Email body is required");
+      return;
+    }
+    if (targetCerts.length === 0) {
+      toast.error("No recipients selected");
+      return;
+    }
+    if (!fromEmail) {
+      toast.error("Select a sender address");
+      return;
+    }
+    // Format as "Display Name <email>" if alias has a display name
+    const formattedFrom = selectedAlias?.displayName
+      ? `${selectedAlias.displayName} <${fromEmail}>`
+      : fromEmail;
+
     onSend(
       subject,
       body,
-      targetCerts.map((c) => c.id)
+      targetCerts.map((c) => c.id),
+      formattedFrom
     );
   };
+
+  const selectedAlias = aliases.find((a) => a.email === fromEmail);
 
   return (
     <div className="space-y-4">
@@ -178,6 +220,23 @@ export function EmailComposer({
         <CardContent>
           {!showPreview ? (
             <div className="space-y-4">
+              {aliases.length > 1 && (
+                <div className="space-y-2">
+                  <Label>From</Label>
+                  <Select value={fromEmail} onValueChange={setFromEmail}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {aliases.map((a) => (
+                        <SelectItem key={a.email} value={a.email}>
+                          {a.displayName ? `${a.displayName} <${a.email}>` : a.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="subject">Subject</Label>
                 <Input
@@ -220,6 +279,31 @@ export function EmailComposer({
           ) : (
             <div className="space-y-3">
               <div className="rounded-lg border bg-background p-4 space-y-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground font-medium w-16">
+                    From:
+                  </span>
+                  {aliases.length > 1 ? (
+                    <Select value={fromEmail} onValueChange={setFromEmail}>
+                      <SelectTrigger className="h-7 w-auto border-0 shadow-none p-0 text-sm font-medium">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {aliases.map((a) => (
+                          <SelectItem key={a.email} value={a.email}>
+                            {a.displayName ? `${a.displayName} <${a.email}>` : a.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className="font-medium">
+                      {selectedAlias?.displayName
+                        ? `${selectedAlias.displayName} <${fromEmail}>`
+                        : fromEmail}
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-muted-foreground font-medium w-16">
                     To:
