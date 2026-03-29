@@ -19,11 +19,19 @@ class GmailProvider implements EmailProvider {
   }
 
   async send(payload: EmailPayload): Promise<SendEmailResult> {
+    const from = payload.from || this.fromEmail;
+    if (!from) {
+      return {
+        success: false,
+        error: "No sender email address — select a From address or reconnect Gmail in Email Settings",
+      };
+    }
+
     try {
       const gmail = getGmailClient(this.accessToken, this.refreshToken);
       const mimeMessage = buildMimeMessage({
         to: payload.to,
-        from: payload.from || this.fromEmail,
+        from,
         subject: payload.subject,
         body: payload.body,
         attachmentName: payload.attachmentName,
@@ -41,9 +49,10 @@ class GmailProvider implements EmailProvider {
 
       return { success: true };
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Gmail send failed",
+        error: `Gmail: ${message}`,
       };
     }
   }
@@ -59,10 +68,18 @@ class ResendProvider implements EmailProvider {
   }
 
   async send(payload: EmailPayload): Promise<SendEmailResult> {
+    const from = payload.from || this.fromEmail;
+    if (!from) {
+      return {
+        success: false,
+        error: "No sender email address — configure a From Email in Resend settings",
+      };
+    }
+
     try {
       const resend = getResendClient(this.apiKey);
       await resend.emails.send({
-        from: payload.from || this.fromEmail,
+        from,
         to: payload.to,
         subject: payload.subject,
         html: payload.body,
@@ -76,9 +93,10 @@ class ResendProvider implements EmailProvider {
 
       return { success: true };
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Resend send failed",
+        error: `Resend: ${message}`,
       };
     }
   }
@@ -86,13 +104,13 @@ class ResendProvider implements EmailProvider {
 
 export function createEmailProvider(config: EmailConfig): EmailProvider {
   if (config.provider === "gmail") {
-    if (!config.gmail_access_token || !config.gmail_refresh_token || !config.gmail_email) {
-      throw new Error("Gmail configuration is incomplete");
+    if (!config.gmail_access_token || !config.gmail_refresh_token) {
+      throw new Error("Gmail configuration is incomplete — missing tokens");
     }
     return new GmailProvider(
       config.gmail_access_token,
       config.gmail_refresh_token,
-      config.gmail_email
+      config.gmail_email ?? ""
     );
   }
 

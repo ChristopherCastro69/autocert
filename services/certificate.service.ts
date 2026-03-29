@@ -1,6 +1,6 @@
 import { TemplateTextConfig } from "@/types";
 import { autoFitText } from "./text-sizing.service";
-import { BATCH_YIELD_INTERVAL } from "@/lib/constants";
+import { BATCH_YIELD_INTERVAL, PAPER_SIZES } from "@/lib/constants";
 
 interface ResolvedConfig {
   posX: number;
@@ -112,24 +112,46 @@ export function renderText(
   }
 }
 
+function getOutputDimensions(
+  img: HTMLImageElement,
+  config: TemplateTextConfig
+): { width: number; height: number } {
+  const sizeKey = config.outputSize ?? "original";
+  if (sizeKey === "original") {
+    return { width: img.naturalWidth, height: img.naturalHeight };
+  }
+  const paper = PAPER_SIZES[sizeKey];
+  return { width: paper.width, height: paper.height };
+}
+
 export async function generateSingleCertificate(
   templateSrc: string,
   recipientName: string,
   config: TemplateTextConfig
 ): Promise<Blob> {
   const img = await loadImage(templateSrc);
-  const canvas = document.createElement("canvas");
-  canvas.width = img.naturalWidth;
-  canvas.height = img.naturalHeight;
+  const { width, height } = getOutputDimensions(img, config);
 
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(img, 0, 0);
-
+  // Render at native resolution first
+  const srcCanvas = document.createElement("canvas");
+  srcCanvas.width = img.naturalWidth;
+  srcCanvas.height = img.naturalHeight;
+  const srcCtx = srcCanvas.getContext("2d")!;
+  srcCtx.drawImage(img, 0, 0);
   const resolved = resolveConfig(img, config);
-  renderText(ctx, recipientName, resolved, config);
+  renderText(srcCtx, recipientName, resolved, config);
+
+  // Scale to output size if needed
+  const outCanvas = document.createElement("canvas");
+  outCanvas.width = width;
+  outCanvas.height = height;
+  const outCtx = outCanvas.getContext("2d")!;
+  outCtx.imageSmoothingEnabled = true;
+  outCtx.imageSmoothingQuality = "high";
+  outCtx.drawImage(srcCanvas, 0, 0, width, height);
 
   return new Promise((resolve, reject) => {
-    canvas.toBlob(
+    outCanvas.toBlob(
       (blob) => {
         if (blob) resolve(blob);
         else reject(new Error("Failed to generate certificate blob"));
@@ -157,24 +179,36 @@ export async function* generateBatch(
   onProgress?: (current: number, total: number) => void
 ): AsyncGenerator<{ name: string; blob: Blob }> {
   const img = await loadImage(templateSrc);
+  const { width, height } = getOutputDimensions(img, config);
+  const needsScale = width !== img.naturalWidth || height !== img.naturalHeight;
   const total = recipients.length;
 
   for (let i = 0; i < total; i++) {
     const { firstName, lastName } = recipients[i];
     const name = `${firstName} ${lastName}`.trim();
 
-    const canvas = document.createElement("canvas");
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-
-    const ctx = canvas.getContext("2d")!;
-    ctx.drawImage(img, 0, 0);
-
+    // Render at native resolution
+    const srcCanvas = document.createElement("canvas");
+    srcCanvas.width = img.naturalWidth;
+    srcCanvas.height = img.naturalHeight;
+    const srcCtx = srcCanvas.getContext("2d")!;
+    srcCtx.drawImage(img, 0, 0);
     const resolved = resolveConfig(img, config);
-    renderText(ctx, name, resolved, config);
+    renderText(srcCtx, name, resolved, config);
+
+    // Scale if needed
+    const outCanvas = needsScale ? document.createElement("canvas") : srcCanvas;
+    if (needsScale) {
+      outCanvas.width = width;
+      outCanvas.height = height;
+      const outCtx = outCanvas.getContext("2d")!;
+      outCtx.imageSmoothingEnabled = true;
+      outCtx.imageSmoothingQuality = "high";
+      outCtx.drawImage(srcCanvas, 0, 0, width, height);
+    }
 
     const blob: Blob = await new Promise((resolve, reject) => {
-      canvas.toBlob(
+      outCanvas.toBlob(
         (b) => {
           if (b) resolve(b);
           else reject(new Error(`Failed to generate certificate for ${name}`));

@@ -21,6 +21,9 @@ export interface EmailJob {
   id: string;
   org_id: string;
   generated_certificate_id: string;
+  subject: string | null;
+  body: string | null;
+  from_email: string | null;
   status: EmailJobStatus;
   attempts: number;
   max_attempts: number;

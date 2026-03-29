@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Template, Recipient, TemplateTextConfig } from "@/types";
 import { useTextProperties } from "@/hooks/use-text-properties";
 import { CertificatePreview } from "./certificate-preview";
@@ -21,20 +21,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createClient } from "@/lib/supabase/client";
-import * as templateRepo from "@/repositories/template.repository";
-import { Save, ChevronLeft, ChevronRight } from "lucide-react";
+import { PAPER_SIZES, MIN_TEMPLATE_WIDTH, MIN_TEMPLATE_HEIGHT } from "@/lib/constants";
+import type { PaperSize } from "@/lib/constants";
+import { ChevronLeft, ChevronRight, AlertTriangle, Play, Loader2 } from "lucide-react";
 
 interface CertificateEditorProps {
   template: Template;
   recipients: Recipient[];
-  onConfigSaved?: (config: TemplateTextConfig) => void;
+  onConfigChange?: (config: TemplateTextConfig) => void;
+  onGenerate?: () => void;
+  isGenerating?: boolean;
 }
 
 export function CertificateEditor({
   template,
   recipients,
-  onConfigSaved,
+  onConfigChange,
+  onGenerate,
+  isGenerating,
 }: CertificateEditorProps) {
   const {
     config,
@@ -50,11 +54,50 @@ export function CertificateEditor({
     setPosYPercent,
     setBoundingBoxWidthPercent,
     setBoundingBoxHeightPercent,
+    setOutputSize,
   } = useTextProperties(template.text_config);
+
+  const [templateRes, setTemplateRes] = useState<{ w: number; h: number } | null>(null);
+  const [canScrollDown, setCanScrollDown] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Track whether the scrollable area has more content below
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const check = () => {
+      setCanScrollDown(el.scrollHeight - el.scrollTop - el.clientHeight > 8);
+    };
+    check();
+    el.addEventListener("scroll", check);
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener("scroll", check);
+      observer.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setTemplateRes({ w: img.naturalWidth, h: img.naturalHeight });
+    img.src = template.template_url;
+  }, [template.template_url]);
+
+  // Check if template resolution is too low for selected paper size
+  const selectedSize = PAPER_SIZES[config.outputSize ?? "original"];
+  const isUpscaling = templateRes && selectedSize.width > 0 &&
+    (templateRes.w < selectedSize.width || templateRes.h < selectedSize.height);
+  const isLowRes = templateRes &&
+    (templateRes.w < MIN_TEMPLATE_WIDTH || templateRes.h < MIN_TEMPLATE_HEIGHT);
+
+  // Notify parent of config changes
+  useEffect(() => {
+    onConfigChange?.(config);
+  }, [config, onConfigChange]);
 
   const previewNames = recipients.slice(0, 5);
   const [previewIndex, setPreviewIndex] = useState(0);
-  const [saving, setSaving] = useState(false);
 
   const currentName =
     previewNames.length > 0
@@ -68,17 +111,6 @@ export function CertificateEditor({
   const handleNextName = useCallback(() => {
     setPreviewIndex((i) => (i < previewNames.length - 1 ? i + 1 : 0));
   }, [previewNames.length]);
-
-  const handleSaveConfig = useCallback(async () => {
-    setSaving(true);
-    try {
-      const supabase = createClient();
-      await templateRepo.updateTextConfig(supabase, template.id, config);
-      onConfigSaved?.(config);
-    } finally {
-      setSaving(false);
-    }
-  }, [template.id, config, onConfigSaved]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -114,8 +146,9 @@ export function CertificateEditor({
         )}
       </div>
 
-      <Card className="flex flex-col lg:max-h-[calc(100vh-14rem)]">
-        <div className="flex-1 overflow-y-auto">
+      <div className="lg:sticky lg:top-0 lg:self-start">
+      <Card className="flex flex-col lg:max-h-[calc(100vh-21rem)]">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto relative">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Text Style</CardTitle>
           </CardHeader>
@@ -147,19 +180,80 @@ export function CertificateEditor({
               setBoundingBoxHeightPercent={setBoundingBoxHeightPercent}
             />
           </CardContent>
+
+          <div className="border-t mx-6" />
+
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Output</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-2">
+              <Label>Paper Size</Label>
+              <Select
+                value={config.outputSize ?? "original"}
+                onValueChange={(v) => setOutputSize(v as PaperSize)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(PAPER_SIZES).map(([key, size]) => (
+                    <SelectItem key={key} value={key}>
+                      {size.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {templateRes && (
+              <p className="text-xs text-muted-foreground">
+                Template: {templateRes.w}×{templateRes.h}px
+              </p>
+            )}
+
+            {isUpscaling && (
+              <div className="flex gap-2 items-start rounded-md bg-yellow-500/10 border border-yellow-500/20 p-2.5">
+                <AlertTriangle className="h-3.5 w-3.5 text-yellow-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-muted-foreground">
+                  Template is smaller than {selectedSize.label} output. This may reduce quality.
+                </p>
+              </div>
+            )}
+
+            {isLowRes && config.outputSize === "original" && (
+              <div className="flex gap-2 items-start rounded-md bg-yellow-500/10 border border-yellow-500/20 p-2.5">
+                <AlertTriangle className="h-3.5 w-3.5 text-yellow-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-muted-foreground">
+                  Low resolution. For print quality, use at least {MIN_TEMPLATE_WIDTH}×{MIN_TEMPLATE_HEIGHT}px.
+                </p>
+              </div>
+            )}
+          </CardContent>
         </div>
 
+        {/* Scroll fade indicator */}
+        {canScrollDown && (
+          <div className="h-8 bg-gradient-to-t from-card to-transparent pointer-events-none -mt-8 relative z-10 shrink-0" />
+        )}
+
+        {/* Pinned Generate button */}
         <div className="border-t p-4 shrink-0">
           <Button
             className="w-full"
-            onClick={handleSaveConfig}
-            disabled={saving}
+            onClick={onGenerate}
+            disabled={isGenerating}
           >
-            <Save className="mr-2 h-4 w-4" />
-            {saving ? "Saving..." : "Save Config"}
+            {isGenerating ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Play className="mr-2 h-4 w-4" />
+            )}
+            {isGenerating ? "Generating..." : "Generate All"}
           </Button>
         </div>
       </Card>
+      </div>
     </div>
   );
 }

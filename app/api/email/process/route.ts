@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createEmailProvider } from "@/services/email.service";
 import { EMAIL_BATCH_SIZE } from "@/lib/constants";
 import type { EmailConfig, GeneratedCertificateWithRecipient } from "@/types";
@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Fetch pending jobs
   const { data: jobs, error: jobsError } = await supabase
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       // Get certificate + recipient
       const { data: cert } = await supabase
         .from("generated_certificates")
-        .select("*, recipients(id, first_name, last_name, email)")
+        .select("*, recipients(id, first_name, last_name, email, event_id)")
         .eq("id", job.generated_certificate_id)
         .single();
 
@@ -83,21 +83,30 @@ export async function POST(request: NextRequest) {
       }
       const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
 
+      // Fetch event name for template variable
+      const { data: event } = await supabase
+        .from("events")
+        .select("name")
+        .eq("id", typedCert.recipients.event_id)
+        .single();
+
       // Replace template vars in subject and body
       const recipientFirstName = typedCert.recipients.first_name;
       const recipientLastName = typedCert.recipients.last_name;
+      const eventName = event?.name ?? "";
 
-      const resolvedSubject = (job.subject ?? "Your Certificate")
-        .replace(/\{\{firstName\}\}/g, recipientFirstName)
-        .replace(/\{\{lastName\}\}/g, recipientLastName);
+      const resolveVars = (text: string) =>
+        text
+          .replace(/\{\{firstName\}\}/g, recipientFirstName)
+          .replace(/\{\{lastName\}\}/g, recipientLastName)
+          .replace(/\{\{eventName\}\}/g, eventName);
 
-      const resolvedBody = (job.body ?? "")
-        .replace(/\{\{firstName\}\}/g, recipientFirstName)
-        .replace(/\{\{lastName\}\}/g, recipientLastName);
+      const resolvedSubject = resolveVars(job.subject ?? "Your Certificate");
+      const resolvedBody = resolveVars(job.body ?? "");
 
       const result = await provider.send({
         to: typedCert.recipients.email,
-        from: config.gmail_email ?? config.resend_from_email ?? "",
+        from: job.from_email ?? config.gmail_email ?? config.resend_from_email ?? "",
         subject: resolvedSubject,
         body: resolvedBody,
         attachmentName: `${recipientFirstName}_${recipientLastName}_certificate.png`,

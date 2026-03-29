@@ -1,42 +1,190 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Award, Upload, Users, Mail, Zap, Shield } from "lucide-react";
+import { CertificateAnimation } from "@/components/marketing/certificate-animation";
+import { CheckCircle2 } from "lucide-react";
+
+/* ─── Wave Dividers ─── */
+
+function WaveTop({ fill }: { fill: string }) {
+  return (
+    <div className="wave-divider">
+      <svg viewBox="0 0 1200 60" preserveAspectRatio="none">
+        <path
+          d="M0,60 C200,0 400,40 600,20 C800,0 1000,50 1200,10 L1200,60 Z"
+          fill={fill}
+        />
+      </svg>
+    </div>
+  );
+}
+
+function WaveBottom({ fill }: { fill: string }) {
+  return (
+    <div className="wave-divider">
+      <svg viewBox="0 0 1200 60" preserveAspectRatio="none">
+        <path
+          d="M0,0 C200,50 400,10 600,30 C800,50 1000,5 1200,40 L1200,0 Z"
+          fill={fill}
+        />
+      </svg>
+    </div>
+  );
+}
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Hero */}
-      <section className="flex flex-col items-center justify-center py-24 px-4 text-center">
-        <h1 className="text-4xl md:text-6xl font-bold tracking-tight max-w-3xl">
-          Generate & distribute certificates at scale
+    <div className="flex flex-col">
+      {/* ─── HERO ─── */}
+      <section className="flex flex-col items-center justify-center py-16 sm:py-24 md:py-32 px-4 sm:px-6 text-center">
+        <h1 className="text-3xl sm:text-5xl md:text-7xl font-extrabold max-w-4xl leading-[1.1]">
+          Generate &amp; Distribute Certificates at Scale
         </h1>
-        <p className="text-lg text-muted-foreground mt-4 max-w-xl">
+        <p className="text-base sm:text-lg md:text-xl text-muted-foreground mt-4 sm:mt-6 max-w-2xl">
           AutoCert helps event organizers create, customize, and send
           personalized certificates to hundreds of attendees in minutes.
         </p>
-        <div className="flex gap-3 mt-8">
-          <Button asChild size="lg">
-            <Link href="/sign-up">Get started free</Link>
-          </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link href="/sign-in">Sign in</Link>
-          </Button>
+        <Button asChild size="lg" className="mt-8 sm:mt-10 text-sm sm:text-base px-8 sm:px-10">
+          <Link href="/sign-up">Create a Certificate Now</Link>
+        </Button>
+        <p className="mt-4 flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+          <CheckCircle2 className="h-4 w-4 text-secondary shrink-0" />
+          100% Free &mdash; Download in PNG or JPEG
+        </p>
+      </section>
+
+      {/* ─── WAVE → SECONDARY SECTION ─── */}
+      <WaveTop fill="hsl(var(--secondary))" />
+      <section className="bg-secondary px-4 sm:px-6 py-14 sm:py-20 md:py-28">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+          <div className="text-center lg:text-left">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-secondary-foreground leading-tight">
+              Upload Templates &amp; Auto Generate Certificates
+            </h2>
+            <p className="mt-4 sm:mt-6 text-secondary-foreground/80 text-base sm:text-lg leading-relaxed">
+              Upload your own certificate template, import a list of recipients
+              via CSV or XLSX, and generate personalized certificates in one
+              click. Our AI automatically maps your spreadsheet columns to the
+              right fields.
+            </p>
+            <p className="mt-3 sm:mt-4 text-secondary-foreground/80 text-base sm:text-lg leading-relaxed">
+              Each certificate is rendered client-side at full template
+              resolution — no server processing, no quality loss.
+            </p>
+          </div>
+
+          {/* Certificate preview card */}
+          <div className="flex justify-center">
+            <div className="cert-card rounded-xl border-2 border-secondary-foreground/20 bg-card p-4 sm:p-6 shadow-[6px_6px_0px] shadow-secondary-foreground/15 max-w-xs sm:max-w-sm w-full">
+              <div className="border-2 border-dashed border-secondary/50 rounded-lg p-6 sm:p-8 text-center space-y-3 bg-background">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-medium">
+                  Certificate of Completion
+                </p>
+                <p className="text-xl sm:text-2xl font-bold">Maria Santos</p>
+                <div className="w-12 h-0.5 bg-secondary mx-auto" />
+                <p className="text-xs text-muted-foreground">
+                  has successfully completed the
+                </p>
+                <p className="text-sm font-semibold">
+                  Web Development Bootcamp 2025
+                </p>
+                <p className="text-[10px] text-muted-foreground pt-3">
+                  March 22, 2026
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <WaveBottom fill="hsl(var(--secondary))" />
+
+      {/* ─── WHITE SECTIONS: Bold headings + descriptions ─── */}
+      <section className="py-14 sm:py-20 md:py-28 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto space-y-14 sm:space-y-20 text-center">
+          <div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold">
+              Auto Text Sizing
+            </h2>
+            <p className="mt-3 sm:mt-4 text-muted-foreground text-base sm:text-lg leading-relaxed">
+              Names are automatically sized to fit within the certificate
+              bounding box using a binary search algorithm. Long names get
+              smaller text, short names get bigger — no manual adjustment
+              needed. Multi-line fallback splits text at the nearest space.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold">
+              No Design Skills Needed
+            </h2>
+            <p className="mt-3 sm:mt-4 text-muted-foreground text-base sm:text-lg leading-relaxed">
+              Upload any certificate template image and use the visual editor
+              to position text fields with a live preview. Choose from multiple
+              fonts including Poppins, Roboto, and Pacifico. Percentage-based
+              positioning means your layout works at any resolution.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold">
+              Download &amp; Distribute for Free
+            </h2>
+            <p className="mt-3 sm:mt-4 text-muted-foreground text-base sm:text-lg leading-relaxed">
+              Generate certificates and download them individually or as a ZIP
+              file. Or connect your Gmail or Resend account and deliver
+              certificates directly to each recipient via personalized email —
+              with template variables, retry logic, and delivery tracking.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-16 px-4 border-t bg-muted/30">
+      {/* ─── WAVE → ACCENT SECTION: Feature cards ─── */}
+      <WaveTop fill="hsl(var(--accent))" />
+      <section className="bg-accent px-4 sm:px-6 py-14 sm:py-20 md:py-28">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-12">
-            Everything you need for certificate management
+          <div className="border-2 border-accent-foreground/15 rounded-2xl bg-card overflow-hidden">
+            {/* Mobile: stacked. Tablet: 2x2. Desktop: 4 across */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+              {features.map((feature, i) => (
+                <div
+                  key={feature.title}
+                  className={`px-5 sm:px-6 py-8 sm:py-10 text-center space-y-4
+                    ${i < features.length - 1 ? "border-b sm:border-b-0" : ""}
+                    ${i % 2 === 0 ? "sm:border-r" : ""}
+                    ${i < 2 ? "sm:border-b md:border-b-0" : ""}
+                    ${i < 3 ? "md:border-r" : ""}
+                    border-accent-foreground/10
+                  `}
+                >
+                  <div className="flex justify-center" dangerouslySetInnerHTML={{ __html: feature.svg }} />
+                  <h3 className="font-extrabold text-sm sm:text-base">{feature.title}</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+      <WaveBottom fill="hsl(var(--accent))" />
+
+      {/* ─── HOW IT WORKS ─── */}
+      <section className="py-14 sm:py-20 md:py-28 px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-center mb-10 sm:mb-16">
+            How It Works
           </h2>
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => (
-              <div key={feature.title} className="space-y-2">
-                <feature.icon className="h-8 w-8 text-primary" />
-                <h3 className="font-semibold text-lg">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {feature.description}
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-8">
+            {steps.map((step, i) => (
+              <div key={step.title} className="text-center sm:text-left">
+                <span className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-secondary/40 leading-none">
+                  {i + 1}
+                </span>
+                <h3 className="font-extrabold text-lg sm:text-xl mt-3">{step.title}</h3>
+                <p className="mt-2 text-muted-foreground leading-relaxed text-sm">
+                  {step.description}
                 </p>
               </div>
             ))}
@@ -44,55 +192,83 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-16 px-4 text-center">
-        <h2 className="text-2xl font-bold">Ready to get started?</h2>
-        <p className="text-muted-foreground mt-2">
-          Create your organization and start generating certificates today.
-        </p>
-        <Button asChild size="lg" className="mt-6">
-          <Link href="/sign-up">Create free account</Link>
-        </Button>
+      {/* ─── WAVE → SECONDARY SECTION: CTA ─── */}
+      <WaveTop fill="hsl(var(--secondary))" />
+      <section className="bg-secondary px-4 sm:px-6 py-14 sm:py-20 md:py-28">
+        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 sm:gap-10 items-center">
+          <div className="text-center md:text-left">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-secondary-foreground leading-tight">
+              Ready to Start Generating Certificates?
+            </h2>
+            <p className="mt-3 sm:mt-4 text-secondary-foreground/80 text-base sm:text-lg">
+              Create your organization, upload your first template, and
+              generate certificates in under five minutes.
+            </p>
+            <Button
+              asChild
+              size="lg"
+              className="mt-6 sm:mt-8 bg-card text-card-foreground hover:bg-card/90 shadow-[0px_4px_0px] shadow-secondary-foreground/20 hover:shadow-[0px_2px_0px] hover:translate-y-0.5 transition-all text-sm sm:text-base px-8 sm:px-10"
+            >
+              <Link href="/sign-up">Get Started for Free</Link>
+            </Button>
+          </div>
+
+          <div className="flex justify-center">
+            <CertificateAnimation />
+          </div>
+        </div>
       </section>
+      <WaveBottom fill="hsl(var(--secondary))" />
+
+      {/* ─── BOTTOM SPACER ─── */}
+      <div className="py-4 sm:py-8" />
     </div>
   );
 }
 
+/* ─── DATA ─── */
+
 const features = [
   {
-    icon: Upload,
-    title: "Smart file upload",
+    svg: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="6" width="32" height="36" rx="4" /><path d="M16 24l5 5 10-12" stroke-width="2.5" /></svg>`,
+    title: "Instant Download",
     description:
-      "Upload attendee lists in CSV or XLSX format. Our AI automatically maps columns to the right fields.",
+      "Generate certificates and download instantly — no signup or payment required.",
   },
   {
-    icon: Award,
-    title: "Beautiful certificates",
+    svg: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8h-6v6" /><path d="M34 8h6v6" /><path d="M14 40h-6v-6" /><path d="M34 40h6v-6" /><path d="M8 8l10 10" /><path d="M40 8l-10 10" /><path d="M8 40l10-10" /><path d="M40 40l-10-10" /></svg>`,
+    title: "Auto Resizing",
     description:
-      "Upload any template image and customize text placement, fonts, and styling with a live preview.",
+      "Text auto-sizes to fit so you don't have to worry about long names.",
   },
   {
-    icon: Zap,
-    title: "Auto text sizing",
+    svg: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="12" x2="12" y2="36" /><line x1="24" y1="12" x2="24" y2="36" /><line x1="36" y1="12" x2="36" y2="36" /><circle cx="12" cy="20" r="3" fill="currentColor" /><circle cx="24" cy="30" r="3" fill="currentColor" /><circle cx="36" cy="16" r="3" fill="currentColor" /></svg>`,
+    title: "Customization",
     description:
-      "Names are automatically sized to fit within the certificate bounding box, no matter how long.",
+      "Change fonts, colors, and positioning with a live preview editor.",
   },
   {
-    icon: Users,
-    title: "Multi-org support",
+    svg: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="12" width="36" height="26" rx="4" /><path d="M6 16l18 12 18-12" /><circle cx="38" cy="14" r="7" fill="currentColor" stroke="none" /><path d="M34 14l2.5 2.5L41 11" stroke="white" stroke-width="2" /></svg>`,
+    title: "Email Delivery",
     description:
-      "Manage multiple organizations and events from a single dashboard with team collaboration.",
+      "Send via Gmail or Resend with template variables and delivery tracking.",
+  },
+];
+
+const steps = [
+  {
+    title: "Upload your template and recipients",
+    description:
+      "Upload a certificate template image and a CSV/XLSX file with your recipient data. Our AI maps columns like name, email, and course automatically.",
   },
   {
-    icon: Mail,
-    title: "Email distribution",
+    title: "Customize and preview",
     description:
-      "Send certificates directly to recipients via Gmail or Resend with customizable email templates.",
+      "Position text fields on your template with percentage-based placement. Preview how each certificate will look with live rendering before generating the full batch.",
   },
   {
-    icon: Shield,
-    title: "Batch generation",
+    title: "Generate and distribute",
     description:
-      "Generate hundreds of certificates in seconds with progress tracking and ZIP download.",
+      "Batch generate all certificates with one click, then download as a ZIP or send personalized emails to every recipient. Track delivery status in real time.",
   },
 ];

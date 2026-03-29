@@ -14,6 +14,7 @@ export interface TemplateTextConfig {
   textColor: string;
   textAlign: "center" | "left" | "right";
   capitalize: boolean;
+  outputSize: "original" | "letter" | "legal" | "a4" | "a3";
   outputFormat: "png" | "jpeg";
   outputQuality: number;
 }

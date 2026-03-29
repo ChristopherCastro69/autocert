@@ -55,11 +55,13 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const init = async () => {
+      // Use getSession (reads from local storage, no network call) for fast initial load
       const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (authUser) {
+      if (session?.user) {
+        const authUser = session.user;
         const userProfile: UserProfile = {
           id: authUser.id,
           full_name: authUser.user_metadata?.full_name ?? null,
@@ -67,6 +69,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
           avatar_url: authUser.user_metadata?.avatar_url ?? null,
         };
         setUser(userProfile);
+        // Fetch orgs immediately — no need to wait for a second auth call
         await fetchOrgs(userProfile.id);
       }
       setLoading(false);

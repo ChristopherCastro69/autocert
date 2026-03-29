@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Template, Recipient } from "@/types";
+import { Template, Recipient, TemplateTextConfig } from "@/types";
 import * as templateRepo from "@/repositories/template.repository";
 import * as recipientRepo from "@/repositories/recipient.repository";
 import { CertificateEditor } from "@/components/certificate/certificate-editor";
@@ -28,7 +28,6 @@ import {
 import { Label } from "@/components/ui/label";
 import {
   Loader2,
-  Play,
   FileImage,
   Users,
   CheckCircle2,
@@ -44,6 +43,7 @@ export default function GeneratePage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [currentConfig, setCurrentConfig] = useState<TemplateTextConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [resultsOpen, setResultsOpen] = useState(false);
 
@@ -74,17 +74,28 @@ export default function GeneratePage() {
     [templates]
   );
 
+  const handleConfigChange = useCallback((config: TemplateTextConfig) => {
+    setCurrentConfig(config);
+  }, []);
+
   const handleGenerate = useCallback(async () => {
     if (!selectedTemplate || recipients.length === 0) return;
+    const config = currentConfig ?? selectedTemplate.text_config;
+
+    // Auto-save config before generating
+    const supabase = createClient();
+    await templateRepo.updateTextConfig(supabase, selectedTemplate.id, config);
+    setSelectedTemplate((prev) => prev ? { ...prev, text_config: config } : prev);
+
     const folderName = selectedTemplate.name.replace(/[^a-zA-Z0-9_-]/g, "_");
     await generate(
       selectedTemplate.template_url,
-      selectedTemplate.text_config,
+      config,
       recipients,
       selectedTemplate.id,
       folderName
     );
-  }, [selectedTemplate, recipients, generate]);
+  }, [selectedTemplate, recipients, currentConfig, generate]);
 
   if (loading) {
     return (
@@ -118,24 +129,11 @@ export default function GeneratePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">Generate Certificates</h1>
-          <p className="text-sm text-muted-foreground">
-            {recipients.length} recipient{recipients.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <Button
-          onClick={handleGenerate}
-          disabled={isGenerating || !selectedTemplate}
-        >
-          {isGenerating ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Play className="mr-2 h-4 w-4" />
-          )}
-          Generate All
-        </Button>
+      <div>
+        <h1 className="text-lg font-semibold">Generate Certificates</h1>
+        <p className="text-sm text-muted-foreground">
+          {recipients.length} recipient{recipients.length !== 1 ? "s" : ""}
+        </p>
       </div>
 
       {templates.length > 1 && (
@@ -264,11 +262,9 @@ export default function GeneratePage() {
         <CertificateEditor
           template={selectedTemplate}
           recipients={recipients}
-          onConfigSaved={(config) => {
-            setSelectedTemplate((prev) =>
-              prev ? { ...prev, text_config: config } : prev
-            );
-          }}
+          onConfigChange={handleConfigChange}
+          onGenerate={handleGenerate}
+          isGenerating={isGenerating}
         />
       )}
     </div>

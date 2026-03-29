@@ -76,6 +76,13 @@ export function useTextProperties(initial?: Partial<TemplateTextConfig>) {
     []
   );
 
+  const setOutputSize = useCallback(
+    (outputSize: TemplateTextConfig["outputSize"]) => {
+      setConfig((prev) => ({ ...prev, outputSize }));
+    },
+    []
+  );
+
   return {
     config,
     setConfig,
@@ -91,5 +98,6 @@ export function useTextProperties(initial?: Partial<TemplateTextConfig>) {
     setPosYPercent,
     setBoundingBoxWidthPercent,
     setBoundingBoxHeightPercent,
+    setOutputSize,
   };
 }
