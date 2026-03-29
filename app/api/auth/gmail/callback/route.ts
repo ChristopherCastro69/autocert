@@ -10,8 +10,11 @@ function errorRedirect(request: NextRequest, fallbackPath: string, message: stri
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
-  const orgId = request.nextUrl.searchParams.get("state");
+  const rawState = request.nextUrl.searchParams.get("state") ?? "";
   const error = request.nextUrl.searchParams.get("error");
+
+  // Parse orgId and optional returnTo from state (format: "orgId" or "orgId|/path")
+  const [orgId, returnTo] = rawState.split("|");
 
   // Google may redirect back with an error (e.g. user denied access)
   if (error) {
@@ -31,20 +34,21 @@ export async function GET(request: NextRequest) {
     .eq("id", orgId)
     .single();
 
-  const settingsPath = org ? `/dashboard/${org.slug}/settings` : "/dashboard";
+  // Use returnTo if provided, otherwise fall back to settings
+  const redirectPath = returnTo || (org ? `/dashboard/${org.slug}/settings` : "/dashboard");
 
   try {
     const oauth2Client = getOAuth2Client();
     const { tokens } = await oauth2Client.getToken(code);
 
     if (!tokens.access_token) {
-      return errorRedirect(request, settingsPath, "Failed to obtain access token from Google");
+      return errorRedirect(request, redirectPath, "Failed to obtain access token from Google");
     }
 
     if (!tokens.refresh_token) {
       return errorRedirect(
         request,
-        settingsPath,
+        redirectPath,
         "No refresh token received. Try revoking app access at myaccount.google.com/permissions and reconnecting."
       );
     }
@@ -117,19 +121,19 @@ export async function GET(request: NextRequest) {
         .update(payload)
         .eq("id", existing.id);
       if (dbError) {
-        return errorRedirect(request, settingsPath, `Failed to update config: ${dbError.message}`);
+        return errorRedirect(request, redirectPath, `Failed to update config: ${dbError.message}`);
       }
     } else {
       const { error: dbError } = await supabase
         .from("email_configs")
         .insert(payload);
       if (dbError) {
-        return errorRedirect(request, settingsPath, `Failed to save config: ${dbError.message}`);
+        return errorRedirect(request, redirectPath, `Failed to save config: ${dbError.message}`);
       }
     }
 
     // Success redirect with optional warning
-    const url = new URL(settingsPath, request.url);
+    const url = new URL(redirectPath, request.url);
     url.searchParams.set("gmail_connected", "true");
     if (!gmailEmail) {
       url.searchParams.set("gmail_warning", "Connected but could not detect email address");
@@ -138,6 +142,6 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error during Gmail setup";
     console.error("Gmail OAuth callback error:", error);
-    return errorRedirect(request, settingsPath, message);
+    return errorRedirect(request, redirectPath, message);
   }
 }

@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getGroqClient } from "@/lib/groq";
 import { GROQ_MODEL, GROQ_TEMPERATURE } from "@/lib/constants";
+import { verifyAuth, isAuthError } from "@/lib/auth";
 import type { MapColumnsRequest, MapColumnsResponse, MappingResult } from "@/types";
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuth();
+    if (isAuthError(auth)) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
     const body: MapColumnsRequest = await request.json();
     const { headers, sampleRows } = body;
 

@@ -29,7 +29,8 @@ export function EmailConfigForm({ orgId, config, onSaved }: EmailConfigFormProps
   const isResendConnected = config?.provider === "resend" && !!config.resend_api_key;
 
   const handleConnectGmail = () => {
-    window.location.href = `/api/auth/gmail/authorize?orgId=${orgId}`;
+    const returnTo = encodeURIComponent(window.location.pathname);
+    window.location.href = `/api/auth/gmail/authorize?orgId=${orgId}&returnTo=${returnTo}`;
   };
 
   const handleSaveResend = async (e: React.FormEvent) => {
