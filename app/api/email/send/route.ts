@@ -7,6 +7,19 @@ export async function POST(request: NextRequest) {
   try {
     const { orgId, certificateIds, subject, body, fromEmail } = await request.json();
 
+    // Validate fromEmail format if provided
+    if (fromEmail && typeof fromEmail === "string") {
+      // Extract email from "Display Name <email>" format
+      const emailMatch = fromEmail.match(/<([^>]+)>/) ?? [null, fromEmail];
+      const email = emailMatch[1] ?? fromEmail;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return NextResponse.json(
+          { error: "Invalid sender email address" },
+          { status: 400 }
+        );
+      }
+    }
+
     if (!orgId || !Array.isArray(certificateIds) || certificateIds.length === 0) {
       return NextResponse.json(
         { error: "orgId and certificateIds are required" },
@@ -63,7 +76,8 @@ export async function POST(request: NextRequest) {
       .select("id");
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Email job creation error:", error.message);
+      return NextResponse.json({ error: "Failed to create email jobs" }, { status: 500 });
     }
 
     // Trigger processing (fire and forget)

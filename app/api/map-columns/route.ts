@@ -66,7 +66,7 @@ ${sampleRows.slice(0, 3).map((row) => JSON.stringify(row)).join("\n")}`;
 
     return NextResponse.json(response);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Map columns error:", error instanceof Error ? error.message : error);
+    return NextResponse.json({ error: "Failed to map columns" }, { status: 500 });
   }
 }

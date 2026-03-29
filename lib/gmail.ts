@@ -17,6 +17,11 @@ export function getGmailClient(accessToken: string, refreshToken: string) {
   return google.gmail({ version: "v1", auth: oauth2Client });
 }
 
+/** Strip CR/LF to prevent email header injection */
+function sanitizeHeader(value: string): string {
+  return value.replace(/[\r\n]/g, "").trim();
+}
+
 export function buildMimeMessage(params: {
   to: string;
   from: string;
@@ -26,11 +31,20 @@ export function buildMimeMessage(params: {
   attachmentData: Buffer;
   attachmentMimeType: string;
 }): string {
+  const from = sanitizeHeader(params.from);
+  const to = sanitizeHeader(params.to);
+  const subject = sanitizeHeader(params.subject);
+  const attachmentName = sanitizeHeader(params.attachmentName);
+
+  if (!to || !from) {
+    throw new Error("Invalid email address in From or To field");
+  }
+
   const boundary = `boundary_${Date.now()}`;
   const lines = [
-    `From: ${params.from}`,
-    `To: ${params.to}`,
-    `Subject: ${params.subject}`,
+    `From: ${from}`,
+    `To: ${to}`,
+    `Subject: ${subject}`,
     `MIME-Version: 1.0`,
     `Content-Type: multipart/mixed; boundary="${boundary}"`,
     "",
@@ -40,8 +54,8 @@ export function buildMimeMessage(params: {
     params.body,
     "",
     `--${boundary}`,
-    `Content-Type: ${params.attachmentMimeType}; name="${params.attachmentName}"`,
-    `Content-Disposition: attachment; filename="${params.attachmentName}"`,
+    `Content-Type: ${params.attachmentMimeType}; name="${attachmentName}"`,
+    `Content-Disposition: attachment; filename="${attachmentName}"`,
     `Content-Transfer-Encoding: base64`,
     "",
     params.attachmentData.toString("base64"),
