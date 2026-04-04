@@ -1,10 +1,9 @@
 "use client";
 
-import { Suspense, useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useGuest } from "@/components/context/guest-context";
 import type { GuestEmailConfig, GuestEmailProvider } from "@/components/context/guest-context";
-import type { GuestBatchResult } from "@/hooks/use-guest-batch-generation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -71,8 +70,16 @@ function GuestEmailSetup({
   const [smtpFromEmail, setSmtpFromEmail] = useState(emailConfig?.fromEmail ?? "");
 
   const handleGmailConnect = () => {
-    // Redirect to guest Gmail OAuth
-    window.location.href = "/api/auth/gmail/guest-authorize?returnTo=/guest/distribute";
+    // Open Gmail OAuth in a popup so we don't lose React state
+    const width = 500;
+    const height = 600;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    window.open(
+      "/api/auth/gmail/guest-authorize?returnTo=/guest/gmail-callback",
+      "gmail-oauth",
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
   };
 
   const handleResendSave = () => {
@@ -554,16 +561,7 @@ async function blobToBase64(blob: Blob): Promise<string> {
 }
 
 export default function GuestDistributePage() {
-  return (
-    <Suspense>
-      <GuestDistributeContent />
-    </Suspense>
-  );
-}
-
-function GuestDistributeContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const {
     generatedCerts,
     recipients,
@@ -575,33 +573,33 @@ function GuestDistributeContent() {
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ sent: number; failed: number } | null>(null);
 
-  // Pick up Gmail tokens from OAuth callback redirect
+  // Listen for Gmail tokens from OAuth popup via postMessage
   useEffect(() => {
-    const gmailConnected = searchParams.get("gmail_connected");
-    const accessToken = searchParams.get("gmail_access_token");
-    const refreshToken = searchParams.get("gmail_refresh_token");
-    const email = searchParams.get("gmail_email");
-    const gmailError = searchParams.get("gmail_error");
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== "gmail-oauth-callback") return;
 
-    if (gmailError) {
-      toast.error(gmailError);
-      // Clear URL params
-      window.history.replaceState({}, "", "/guest/distribute");
-      return;
-    }
+      const { gmail_connected, gmail_access_token, gmail_refresh_token, gmail_email, gmail_error } = event.data;
 
-    if (gmailConnected && accessToken && refreshToken) {
-      setEmailConfig({
-        provider: "gmail",
-        fromEmail: email || "",
-        gmailAccessToken: accessToken,
-        gmailRefreshToken: refreshToken,
-      });
-      toast.success(`Gmail connected${email ? ` as ${email}` : ""}`);
-      // Clear tokens from URL immediately
-      window.history.replaceState({}, "", "/guest/distribute");
-    }
-  }, [searchParams, setEmailConfig]);
+      if (gmail_error) {
+        toast.error(gmail_error);
+        return;
+      }
+
+      if (gmail_connected && gmail_access_token && gmail_refresh_token) {
+        setEmailConfig({
+          provider: "gmail",
+          fromEmail: gmail_email || "",
+          gmailAccessToken: gmail_access_token,
+          gmailRefreshToken: gmail_refresh_token,
+        });
+        toast.success(`Gmail connected${gmail_email ? ` as ${gmail_email}` : ""}`);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [setEmailConfig]);
 
   // Build cert-recipient pairs
   const certRecipients: GuestCertRecipient[] = useMemo(() => {
