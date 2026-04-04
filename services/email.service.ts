@@ -6,8 +6,18 @@ import {
 } from "@/types";
 import { getGmailClient, buildMimeMessage } from "@/lib/gmail";
 import { getResendClient } from "@/lib/resend";
+import nodemailer from "nodemailer";
 
-class GmailProvider implements EmailProvider {
+export interface SmtpConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  username: string;
+  password: string;
+  fromEmail: string;
+}
+
+export class GmailProvider implements EmailProvider {
   private accessToken: string;
   private refreshToken: string;
   private fromEmail: string;
@@ -58,7 +68,7 @@ class GmailProvider implements EmailProvider {
   }
 }
 
-class ResendProvider implements EmailProvider {
+export class ResendProvider implements EmailProvider {
   private apiKey: string;
   private fromEmail: string;
 
@@ -98,6 +108,52 @@ class ResendProvider implements EmailProvider {
         success: false,
         error: `Resend: ${message}`,
       };
+    }
+  }
+}
+
+export class SmtpProvider implements EmailProvider {
+  private config: SmtpConfig;
+
+  constructor(config: SmtpConfig) {
+    this.config = config;
+  }
+
+  async send(payload: EmailPayload): Promise<SendEmailResult> {
+    const from = payload.from || this.config.fromEmail;
+    if (!from) {
+      return { success: false, error: "No sender email address" };
+    }
+
+    try {
+      const transport = nodemailer.createTransport({
+        host: this.config.host,
+        port: this.config.port,
+        secure: this.config.secure,
+        auth: {
+          user: this.config.username,
+          pass: this.config.password,
+        },
+      });
+
+      await transport.sendMail({
+        from,
+        to: payload.to,
+        subject: payload.subject,
+        html: payload.body,
+        attachments: [
+          {
+            filename: payload.attachmentName,
+            content: payload.attachmentData,
+            contentType: payload.attachmentMimeType,
+          },
+        ],
+      });
+
+      return { success: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { success: false, error: `SMTP: ${message}` };
     }
   }
 }

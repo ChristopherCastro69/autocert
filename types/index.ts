@@ -45,3 +45,5 @@ export type {
   MapColumnsRequest,
   MapColumnsResponse,
 } from "./column-mapping";
+
+export type { GuestRecipient } from "./guest";

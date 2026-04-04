@@ -17,8 +17,8 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
     img.onload = () => resolve(img);
     img.onerror = (e) => reject(new Error(`Failed to load image: ${e}`));
 
-    // Data URLs don't need crossOrigin
-    if (!src.startsWith("data:")) {
+    // Data URLs and blob URLs don't need crossOrigin
+    if (!src.startsWith("data:") && !src.startsWith("blob:")) {
       img.crossOrigin = "anonymous";
     }
     img.src = src;
