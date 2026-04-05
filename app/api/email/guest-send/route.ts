@@ -2,6 +2,63 @@ import { NextRequest, NextResponse } from "next/server";
 import { GmailProvider, SmtpProvider, type SmtpConfig } from "@/services/email.service";
 import { getResendClient } from "@/lib/resend";
 import type { EmailPayload, SendEmailResult } from "@/types";
+
+// ─── Rate Limiting ───
+
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const MAX_REQUESTS_PER_WINDOW = 15;
+const MAX_EMAILS_PER_WINDOW = 500;
+
+interface RateLimitEntry {
+  requests: number;
+  emails: number;
+  windowStart: number;
+}
+
+const rateLimitMap = new Map<string, RateLimitEntry>();
+
+function getClientIp(request: NextRequest): string {
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown"
+  );
+}
+
+function checkRateLimit(ip: string, emailCount: number): { allowed: boolean; error?: string } {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateLimitMap.set(ip, { requests: 1, emails: emailCount, windowStart: now });
+    return { allowed: true };
+  }
+
+  if (entry.requests + 1 > MAX_REQUESTS_PER_WINDOW) {
+    return { allowed: false, error: `Rate limit exceeded. Max ${MAX_REQUESTS_PER_WINDOW} requests per hour.` };
+  }
+
+  if (entry.emails + emailCount > MAX_EMAILS_PER_WINDOW) {
+    return { allowed: false, error: `Email limit exceeded. Max ${MAX_EMAILS_PER_WINDOW} emails per hour.` };
+  }
+
+  entry.requests++;
+  entry.emails += emailCount;
+  return { allowed: true };
+}
+
+// Clean up stale entries every 10 minutes
+setInterval(() => {
+  const now = Date.now();
+  rateLimitMap.forEach((entry, ip) => {
+    if (now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+      rateLimitMap.delete(ip);
+    }
+  });
+}, 10 * 60 * 1000);
+
+// ─── Types ───
+
 interface GuestRecipient {
   firstName: string;
   lastName: string;
@@ -29,15 +86,24 @@ interface GuestSendRequest {
   smtpConfig?: SmtpConfig;
 }
 
+function htmlEscape(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function replaceTemplateVars(
   text: string,
   recipient: GuestRecipient,
   eventName: string
 ): string {
   return text
-    .replace(/\{\{firstName\}\}/g, recipient.firstName)
-    .replace(/\{\{lastName\}\}/g, recipient.lastName)
-    .replace(/\{\{eventName\}\}/g, eventName);
+    .replace(/\{\{firstName\}\}/g, htmlEscape(recipient.firstName))
+    .replace(/\{\{lastName\}\}/g, htmlEscape(recipient.lastName))
+    .replace(/\{\{eventName\}\}/g, htmlEscape(eventName));
 }
 
 export async function POST(request: NextRequest) {
@@ -58,6 +124,13 @@ export async function POST(request: NextRequest) {
         { error: "Guest mode supports up to 50 emails per batch" },
         { status: 400 }
       );
+    }
+
+    // Rate limiting
+    const ip = getClientIp(request);
+    const rateCheck = checkRateLimit(ip, body.recipients.length);
+    if (!rateCheck.allowed) {
+      return NextResponse.json({ error: rateCheck.error }, { status: 429 });
     }
 
     // Create provider from in-memory credentials
@@ -108,9 +181,11 @@ export async function POST(request: NextRequest) {
     // Send emails synchronously
     const results: { email: string; name: string; success: boolean; error?: string }[] = [];
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     for (const recipient of body.recipients) {
-      if (!recipient.email) {
-        results.push({ email: "", name: `${recipient.firstName} ${recipient.lastName}`, success: false, error: "No email address" });
+      if (!recipient.email || !emailRegex.test(recipient.email)) {
+        results.push({ email: recipient.email || "", name: `${recipient.firstName} ${recipient.lastName}`, success: false, error: "Invalid email address" });
         continue;
       }
 

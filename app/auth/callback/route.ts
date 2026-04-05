@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  if (redirectTo) {
+  if (redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
     return NextResponse.redirect(`${origin}${redirectTo}`);
   }
 

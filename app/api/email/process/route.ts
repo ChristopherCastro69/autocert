@@ -2,11 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createEmailProvider } from "@/services/email.service";
 import { EMAIL_BATCH_SIZE } from "@/lib/constants";
+import { timingSafeEqual } from "crypto";
 import type { EmailConfig, GeneratedCertificateWithRecipient } from "@/types";
+
+function verifySecret(provided: string | null, expected: string | undefined): boolean {
+  if (!provided || !expected) return false;
+  if (provided.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
+}
 
 export async function POST(request: NextRequest) {
   const cronSecret = request.headers.get("x-cron-secret");
-  if (cronSecret !== process.env.CRON_SECRET) {
+  if (!verifySecret(cronSecret, process.env.CRON_SECRET)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -95,11 +102,14 @@ export async function POST(request: NextRequest) {
       const recipientLastName = typedCert.recipients.last_name;
       const eventName = event?.name ?? "";
 
+      const htmlEscape = (t: string) =>
+        t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+
       const resolveVars = (text: string) =>
         text
-          .replace(/\{\{firstName\}\}/g, recipientFirstName)
-          .replace(/\{\{lastName\}\}/g, recipientLastName)
-          .replace(/\{\{eventName\}\}/g, eventName);
+          .replace(/\{\{firstName\}\}/g, htmlEscape(recipientFirstName))
+          .replace(/\{\{lastName\}\}/g, htmlEscape(recipientLastName))
+          .replace(/\{\{eventName\}\}/g, htmlEscape(eventName));
 
       const resolvedSubject = resolveVars(job.subject ?? "Your Certificate");
       const resolvedBody = resolveVars(job.body ?? "");
