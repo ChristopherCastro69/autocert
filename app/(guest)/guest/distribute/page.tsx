@@ -47,6 +47,12 @@ import {
 
 // ─── Provider Config ───
 
+interface GmailAlias {
+  email: string;
+  displayName: string;
+  isPrimary: boolean;
+}
+
 function GuestEmailSetup({
   emailConfig,
   onConfigChange,
@@ -57,6 +63,7 @@ function GuestEmailSetup({
   const [provider, setProvider] = useState<GuestEmailProvider>(
     emailConfig?.provider ?? "gmail"
   );
+  const [gmailAliases, setGmailAliases] = useState<GmailAlias[]>([]);
 
   // Resend fields
   const [resendApiKey, setResendApiKey] = useState(emailConfig?.resendApiKey ?? "");
@@ -69,6 +76,26 @@ function GuestEmailSetup({
   const [smtpUsername, setSmtpUsername] = useState(emailConfig?.smtpUsername ?? "");
   const [smtpPassword, setSmtpPassword] = useState(emailConfig?.smtpPassword ?? "");
   const [smtpFromEmail, setSmtpFromEmail] = useState(emailConfig?.fromEmail ?? "");
+
+  // Fetch Gmail aliases when connected
+  useEffect(() => {
+    if (emailConfig?.provider !== "gmail" || !emailConfig.gmailAccessToken || !emailConfig.gmailRefreshToken) {
+      return;
+    }
+    fetch("/api/auth/gmail/guest-aliases", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        accessToken: emailConfig.gmailAccessToken,
+        refreshToken: emailConfig.gmailRefreshToken,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.aliases) setGmailAliases(data.aliases);
+      })
+      .catch(() => {});
+  }, [emailConfig?.provider, emailConfig?.gmailAccessToken, emailConfig?.gmailRefreshToken]);
 
   const handleGmailConnect = () => {
     // Open Gmail OAuth in a popup so we don't lose React state
@@ -145,18 +172,43 @@ function GuestEmailSetup({
               Sign in with your Google account to send emails via Gmail. No data is stored on our servers.
             </p>
             {emailConfig?.provider === "gmail" ? (
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium">
-                  Connected as {emailConfig.fromEmail}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onConfigChange(null)}
-                >
-                  Disconnect
-                </Button>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium">
+                    Connected as {emailConfig.fromEmail}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { onConfigChange(null); setGmailAliases([]); }}
+                  >
+                    Disconnect
+                  </Button>
+                </div>
+                {gmailAliases.length > 1 && (
+                  <div className="space-y-2">
+                    <Label className="text-sm">Send as</Label>
+                    <Select
+                      value={emailConfig.fromEmail}
+                      onValueChange={(email) =>
+                        onConfigChange({ ...emailConfig, fromEmail: email })
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {gmailAliases.map((a) => (
+                          <SelectItem key={a.email} value={a.email}>
+                            {a.displayName ? `${a.displayName} <${a.email}>` : a.email}
+                            {a.isPrimary ? " (primary)" : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             ) : (
               <Button onClick={handleGmailConnect}>
@@ -451,7 +503,7 @@ function GuestEmailComposer({
                   <span className="font-medium">{previewSubject}</span>
                 </div>
                 <div className="border-t pt-3">
-                  <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(preview) }} />
+                  <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(preview, { ALLOWED_TAGS: ["p", "br", "strong", "em", "u", "a", "h1", "h2", "h3", "ul", "ol", "li", "blockquote"], ALLOWED_ATTR: ["href", "title"] }) }} />
                   <div className="mt-4 flex items-center gap-2 rounded-md bg-muted/50 p-3">
                     <div className="h-8 w-8 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground">PNG</div>
                     <div className="text-xs">

@@ -324,7 +324,7 @@ export function EmailComposer({
                 <div className="border-t pt-3">
                   <div
                     className="prose prose-sm dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(preview) }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(preview, { ALLOWED_TAGS: ["p", "br", "strong", "em", "u", "a", "h1", "h2", "h3", "ul", "ol", "li", "blockquote"], ALLOWED_ATTR: ["href", "title"] }) }}
                   />
                   <div className="mt-4 flex items-center gap-2 rounded-md bg-muted/50 p-3">
                     <div className="h-8 w-8 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground">
