@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
       "openid",
       "https://www.googleapis.com/auth/userinfo.email",
       "https://www.googleapis.com/auth/gmail.send",
+      "https://www.googleapis.com/auth/gmail.settings.basic",
     ],
     state: `guest|${returnTo}`,
   });

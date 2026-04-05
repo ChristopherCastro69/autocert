@@ -43,17 +43,14 @@ export default function LandingPage() {
           AutoCert helps event organizers create, customize, and send
           personalized certificates to hundreds of attendees in minutes.
         </p>
-        <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center gap-3">
+        <div className="mt-8 sm:mt-10">
           <Button asChild size="lg" className="text-sm sm:text-base px-8 sm:px-10">
-            <Link href="/sign-up">Create a Certificate Now</Link>
-          </Button>
-          <Button asChild variant="outline" size="lg" className="text-sm sm:text-base px-8 sm:px-10">
-            <Link href="/guest/template">Try Without Signing Up</Link>
+            <Link href="/guest/template">Create a Certificate Now</Link>
           </Button>
         </div>
         <p className="mt-4 flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
           <CheckCircle2 className="h-4 w-4 text-secondary shrink-0" />
-          100% Free &mdash; Download in PNG or JPEG
+          No sign-up required &mdash; 100% Free
         </p>
       </section>
 
@@ -214,7 +211,7 @@ export default function LandingPage() {
               size="lg"
               className="mt-6 sm:mt-8 bg-card text-card-foreground hover:bg-card/90 shadow-[0px_4px_0px] shadow-secondary-foreground/20 hover:shadow-[0px_2px_0px] hover:translate-y-0.5 transition-all text-sm sm:text-base px-8 sm:px-10"
             >
-              <Link href="/sign-up">Get Started for Free</Link>
+              <Link href="/guest/template">Get Started for Free</Link>
             </Button>
           </div>
 
