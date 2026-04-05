@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getGroqClient } from "@/lib/groq";
 import { GROQ_MODEL, GROQ_TEMPERATURE } from "@/lib/constants";
+import { verifyAuth, isAuthError } from "@/lib/auth";
 import type { MapColumnsRequest, MapColumnsResponse, MappingResult } from "@/types";
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuth();
+    if (isAuthError(auth)) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
     const body: MapColumnsRequest = await request.json();
     const { headers, sampleRows } = body;
 
@@ -60,7 +66,7 @@ ${sampleRows.slice(0, 3).map((row) => JSON.stringify(row)).join("\n")}`;
 
     return NextResponse.json(response);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Map columns error:", error instanceof Error ? error.message : error);
+    return NextResponse.json({ error: "Failed to map columns" }, { status: 500 });
   }
 }

@@ -9,10 +9,12 @@ import {
   ChevronDown,
   LogOut,
   CircleUser,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOrg } from "@/components/context/OrgContext";
 import { signOutAction } from "@/app/actions";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -25,6 +27,7 @@ import {
 export function Sidebar() {
   const { activeOrg, organizations, setActiveOrg, user } = useOrg();
   const pathname = usePathname();
+  const router = useRouter();
 
   if (!activeOrg) return null;
 
@@ -62,6 +65,11 @@ export function Sidebar() {
                 {org.name}
               </DropdownMenuItem>
             ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => router.push("/dashboard?new=true")}>
+              <Plus className="h-3.5 w-3.5 mr-2" />
+              New Organization
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

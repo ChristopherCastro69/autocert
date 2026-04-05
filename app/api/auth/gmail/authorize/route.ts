@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOAuth2Client } from "@/lib/gmail";
+import { verifyOrgMembership, isAuthError } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   const orgId = request.nextUrl.searchParams.get("orgId");
+  const returnTo = request.nextUrl.searchParams.get("returnTo") ?? "";
 
-  if (!orgId) {
-    return NextResponse.json({ error: "orgId is required" }, { status: 400 });
+  const auth = await verifyOrgMembership(orgId);
+  if (isAuthError(auth)) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
+
+  // Encode orgId + return path in state (separated by |)
+  const state = returnTo ? `${auth.orgId}|${returnTo}` : auth.orgId;
 
   const oauth2Client = getOAuth2Client();
 
@@ -19,7 +25,7 @@ export async function GET(request: NextRequest) {
       "https://www.googleapis.com/auth/gmail.send",
       "https://www.googleapis.com/auth/gmail.settings.basic",
     ],
-    state: orgId,
+    state,
   });
 
   return NextResponse.redirect(authUrl);

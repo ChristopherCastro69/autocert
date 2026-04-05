@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verifyOrgMembership, isAuthError } from "@/lib/auth";
 import { getGmailClient } from "@/lib/gmail";
-import type { EmailConfig } from "@/types";
 
 export async function GET(request: NextRequest) {
   const orgId = request.nextUrl.searchParams.get("orgId");
-  if (!orgId) {
-    return NextResponse.json({ error: "orgId is required" }, { status: 400 });
+
+  const auth = await verifyOrgMembership(orgId);
+  if (isAuthError(auth)) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
   const supabase = createAdminClient();

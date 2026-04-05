@@ -65,6 +65,7 @@ export default function MarketingLayout({
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/sign-up" className="hover:text-foreground transition-colors">Create Account</Link></li>
                 <li><Link href="/sign-in" className="hover:text-foreground transition-colors">Sign In</Link></li>
+                <li><Link href="/guest/template" className="hover:text-foreground transition-colors">Guest Mode</Link></li>
               </ul>
             </div>
           </div>

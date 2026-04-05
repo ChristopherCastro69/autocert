@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verifyOrgMembership, isAuthError } from "@/lib/auth";
 import { EMAIL_MAX_ATTEMPTS } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   try {
     const { orgId, certificateIds, subject, body, fromEmail } = await request.json();
+
+    // Validate fromEmail format if provided
+    if (fromEmail && typeof fromEmail === "string") {
+      // Extract email from "Display Name <email>" format
+      const emailMatch = fromEmail.match(/<([^>]+)>/) ?? [null, fromEmail];
+      const email = emailMatch[1] ?? fromEmail;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return NextResponse.json(
+          { error: "Invalid sender email address" },
+          { status: 400 }
+        );
+      }
+    }
 
     if (!orgId || !Array.isArray(certificateIds) || certificateIds.length === 0) {
       return NextResponse.json(
@@ -21,15 +34,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use user client for auth check, admin client for job creation
-    const supabase = await createClient();
-    const adminDb = createAdminClient();
-
-    // Verify caller is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Verify user is authenticated AND a member of this org
+    const auth = await verifyOrgMembership(orgId);
+    if (isAuthError(auth)) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
+
+    const adminDb = createAdminClient();
 
     // Verify org has active email config
     const { data: emailConfig } = await adminDb
@@ -46,7 +57,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create email jobs using admin client (bypasses RLS)
+    // Create email jobs
     const jobs = certificateIds.map((certId: string) => ({
       org_id: orgId,
       generated_certificate_id: certId,
@@ -65,10 +76,11 @@ export async function POST(request: NextRequest) {
       .select("id");
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Email job creation error:", error.message);
+      return NextResponse.json({ error: "Failed to create email jobs" }, { status: 500 });
     }
 
-    // Trigger processing
+    // Trigger processing (fire and forget)
     const processUrl = new URL("/api/email/process", request.url);
     fetch(processUrl.toString(), {
       method: "POST",
@@ -76,9 +88,7 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
         "x-cron-secret": process.env.CRON_SECRET ?? "",
       },
-    }).catch(() => {
-      // Fire and forget - processing will happen async
-    });
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,
