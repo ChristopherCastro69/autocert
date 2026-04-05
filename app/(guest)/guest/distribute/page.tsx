@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useGuest } from "@/components/context/guest-context";
 import type { GuestEmailConfig, GuestEmailProvider } from "@/components/context/guest-context";
+import { SaveWorkCard } from "@/components/guest/save-work-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -735,6 +736,8 @@ export default function GuestDistributePage() {
           sending={sending}
         />
       )}
+
+      <SaveWorkCard />
     </div>
   );
 }

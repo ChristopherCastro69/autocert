@@ -7,6 +7,7 @@ import { CertificateEditor } from "@/components/certificate/certificate-editor";
 import { BatchProgress } from "@/components/certificate/batch-progress";
 import { useGuestBatchGeneration } from "@/hooks/use-guest-batch-generation";
 import { useGuestZipDownload } from "@/hooks/use-guest-zip-download";
+import { SaveWorkCard } from "@/components/guest/save-work-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -250,6 +251,8 @@ export default function GuestGeneratePage() {
           </Dialog>
         </>
       )}
+
+      {displayResults.length > 0 && !isGenerating && <SaveWorkCard />}
 
       {pseudoTemplate && (
         <CertificateEditor
